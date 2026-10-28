@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Knucklebomb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="c" aria-label="Knucklebomb match broadcast"></canvas>
+
+<div id="bug" class="hud" hidden>
+  <div class="live">LIVE</div>
+  <div class="tm"><i class="sw" id="sw0"></i><span id="ab0">HOU</span><span class="sc" id="sc0">0</span><span class="ct" id="ct0">11</span></div>
+  <div class="tm"><i class="sw" id="sw1"></i><span id="ab1">CLB</span><span class="sc" id="sc1">0</span><span class="ct" id="ct1">11</span></div>
+  <div class="clk" id="clk">05:00</div>
+</div>
+<div id="banner" class="hud"><div class="t" id="bt"></div><div class="s" id="bs"></div></div>
+<div id="hold" class="hud"><div class="n" id="hn">15</div><div class="bars"><div class="lbl">BALL TIMER</div><div class="bar"><i id="hb"></i></div><div class="lbl">THROW POWER</div><div class="bar"><i id="pb" style="background:var(--red)"></i></div></div></div>
+<div id="waiting" class="hud" hidden></div>
+<div id="chyron" class="hud" hidden>KNUCKLEBOMB — EXHIBITION</div>
+<div id="keys" class="hud" hidden><b>WASD</b> move · <b>Shift</b> sprint · <b>J</b> pass / tackle · <b>K</b> hold &amp; release to shoot / chain swing · <b>Q</b> switch · <b>P</b> pause · <b>M</b> mute</div>
+
+<div class="overlay" id="menu">
+  <div class="card">
+    <div class="eyebrow">TONIGHT UNDER THE FLOODLIGHTS</div>
+    <h1>KNUCKLE<span>BOMB</span></h1>
+    <p class="lede">Eleven a side. The ball is a bomb. Throw it before the timer reaches zero; in the air it cannot go off. The only foul is hurting a man who does not have the ball.</p>
+    <div class="row"><label>YOUR TEAM</label>
+      <div class="teams">
+        <button class="opt team" id="pick0" aria-pressed="true"><i class="kit" style="background:linear-gradient(90deg,#f3efe2 60%,#d6a422 60%)"></i><span><span class="nm">Houston Deacons</span><br><span class="meta">WHITE &amp; GOLD · PASSING CHAIN</span></span></button>
+        <button class="opt team" id="pick1" aria-pressed="false"><i class="kit" style="background:linear-gradient(90deg,#17181d 60%,#cf2730 60%)"></i><span><span class="nm">Columbus Vanguard</span><br><span class="meta">BLACK &amp; RED · LONG CARRIES</span></span></button>
+      </div>
+    </div>
+    <div class="row"><label>OPPOSITION</label>
+      <div class="seg" id="diff"><button class="opt" data-v="easy" aria-pressed="false">Easy</button><button class="opt" data-v="normal" aria-pressed="true">Normal</button><button class="opt" data-v="hard" aria-pressed="false">Hard</button></div>
+    </div>
+    <div class="row"><label>MATCH CLOCK</label>
+      <div class="seg" id="len"><button class="opt" data-v="3" aria-pressed="false">3 min</button><button class="opt" data-v="5" aria-pressed="true">5 min</button><button class="opt" data-v="8" aria-pressed="false">8 min</button></div>
+    </div>
+    <div class="credits"><small>RAPTURE CREDITS</small><span id="bal">—</span></div>
+    <div class="btns">
+      <button class="go" id="start">PLAY THE AI</button>
+      <button class="go alt" id="onlineBtn">ONLINE MATCH</button>
+    </div>
+    <div class="online" id="onlinePanel" hidden>
+      <div class="line"><button class="opt" id="create">Create match</button><span class="code" id="roomCode"></span></div>
+      <div class="line"><input id="joinCode" maxlength="6" placeholder="CODE" aria-label="Room code" autocomplete="off"><button class="opt" id="join">Join match</button></div>
+      <div class="status" id="netStatus" role="status">Create a match and send your opponent the code, or enter theirs. Your team and clock come from the choices above; the joiner plays the other side.</div>
+    </div>
+    <div class="legend">
+      <div><b>WASD / Arrows</b> move</div><div><b>Shift</b> sprint</div>
+      <div><b>J / Space</b> pass (with ball) · tackle</div><div><b>K</b> hold, release to shoot · chain swing</div>
+      <div><b>Q</b> switch to player nearest the ball</div><div><b>P / Esc</b> pause · <b>M</b> mute</div>
+      <div><b>Gamepad</b> stick · A pass/tackle · B shoot/chain · X switch · RT sprint</div>
+    </div>
+    <p class="note">Keyboard or gamepad required. Defenders carry the ball-and-chain; the goalkeeper guards the box.</p>
+  </div>
+</div>
+
+<div class="overlay" id="pause" hidden>
+  <div class="card"><div class="eyebrow">MATCH PAUSED</div><div class="final">Timeout</div>
+    <div class="btns"><button class="go" id="resume">RESUME</button><button class="go alt" id="quit">QUIT TO MENU</button></div></div>
+</div>
+
+<div class="overlay" id="end" hidden>
+  <div class="card"><div class="eyebrow" id="endEye">FULL TIME</div><div class="final" id="endScore"></div><p class="lede" id="endLine"></p>
+    <table class="stats" id="endStats"></table>
+    <table class="payout" id="endPay"></table>
+    <div class="btns"><button class="go" id="again">REMATCH</button><button class="go alt" id="toMenu">MENU</button></div></div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
