@@ -1,0 +1,10 @@
+{
+  "name": "knucklebomb",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node scripts/check.mjs",
+    "build": "node scripts/check.mjs"
+  }
+}
