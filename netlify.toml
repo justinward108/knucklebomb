@@ -1,0 +1,39 @@
+# Netlify configuration for KnuckleBomb (knucklebomb.poor.camp)
+[build]
+  command = "npm run build"
+  publish = "."
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Poor Camp ecosystem SSO and Arcade Rapture Credits proxy rules
+[[redirects]]
+  from = "/api/arcade/*"
+  to = "https://poor.camp/api/arcade/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/sso/callback"
+  to = "https://poor.camp/api/sso/callback"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/sso/session"
+  to = "https://poor.camp/api/sso/session"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/sso/logout"
+  to = "https://poor.camp/api/sso/logout"
+  status = 200
+  force = true
