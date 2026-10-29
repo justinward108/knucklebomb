@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   if (window.PoorCampAnalytics) return;
-  var hosts = ['poor.camp', 'www.poor.camp', 'champions.poor.camp', 'leadershand.poor.camp', 'dosa.poor.camp', 'makingof.poor.camp', 'usingtoolstocreate.poor.camp', 'paradiselost.poor.camp', 'nirvanasales.poor.camp', 'therecord.poor.camp', 'newsletters.poor.camp', 'gumroad.poor.camp', 'shopify.poor.camp'];
+  var hosts = ['poor.camp', 'www.poor.camp', 'champions.poor.camp', 'leadershand.poor.camp', 'dosa.poor.camp', 'makingof.poor.camp', 'usingtoolstocreate.poor.camp', 'paradiselost.poor.camp', 'nirvanasales.poor.camp', 'knucklebomb.poor.camp', 'therecord.poor.camp', 'newsletters.poor.camp', 'gumroad.poor.camp', 'shopify.poor.camp'];
   var guideHosts = ['makingof.poor.camp', 'usingtoolstocreate.poor.camp'];
   var wikiHost = location.hostname === 'therecord.poor.camp';
   var wikiArticleId = wikiHost ? document.querySelector('meta[name="poorcamp-wiki-article-id"]')?.content || '' : '';
@@ -139,7 +139,7 @@
     var panel = document.createElement('aside');
     panel.setAttribute('aria-label', 'Optional audience measurement');
     panel.id = 'audience-measurement';
-    var fullscreen = ['paradiselost.poor.camp', 'nirvanasales.poor.camp'].includes(location.hostname);
+    var fullscreen = ['paradiselost.poor.camp', 'nirvanasales.poor.camp', 'knucklebomb.poor.camp'].includes(location.hostname);
     var content = panel;
     var details;
     if (fullscreen) {

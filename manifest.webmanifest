@@ -1,0 +1,16 @@
+{
+  "name": "Knucklebomb",
+  "short_name": "Knucklebomb",
+  "description": "Play Knucklebomb, an explosive dice tactics game set in the world of Poor Camp.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#15120f",
+  "theme_color": "#15120f",
+  "icons": [
+    {
+      "src": "/assets/portal-preview.png",
+      "sizes": "1200x630",
+      "type": "image/png"
+    }
+  ]
+}
