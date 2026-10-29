@@ -14,7 +14,7 @@ const RESTART_TIMER=30, CATCH_TIMER=15, MIN_PLAYERS=7, SINBIN=20;
 
 const TEAMS=[
  {name:'Houston Deacons',short:'DEACONS',abbr:'HOU',kit:'#f3efe2',kit2:'#d6a422',shorts:'#d6a422',num:'#6e520b',gk:'#2f8a6c',gk2:'#123d31',coach:'#5a636f',style:7.5},
- {name:'Columbus Vanguard',short:'VANGUARD',abbr:'CLB',kit:'#1a1b21',kit2:'#cf2730',shorts:'#cf2730',num:'#f2f2f2',gk:'#7650c2',gk2:'#2d1f55',coach:'#24262b',style:5.0}
+ {name:'Columbus Vanguard',short:'VANGUARD',abbr:'CLB',kit:'#1a1b21',kit2:'#cf2730',shorts:'#cf2730',num:'#f2f2f2',gk:'#7650c2',gk2:'#2d1f55',coach:'#24262b',style:7.5}
 ];
 // [role, teamFrameX, y, shirt]
 const FORM=[['GK',3,34,1],['DEF',19,10,2],['DEF',16,27,4],['DEF',16,41,5],['DEF',19,58,3],
