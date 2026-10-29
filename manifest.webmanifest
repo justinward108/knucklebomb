@@ -1,12 +1,36 @@
 {
+  "id": "/knucklebomb/",
   "name": "Knucklebomb",
   "short_name": "Knucklebomb",
-  "description": "Play Knucklebomb, an explosive dice tactics game set in the world of Poor Camp.",
+  "description": "Play Knucklebomb, an explosive 11-on-11 arena sport set in the world of Poor Camp.",
   "start_url": "./",
   "display": "standalone",
+  "orientation": "landscape",
   "background_color": "#15120f",
   "theme_color": "#15120f",
+  "categories": [
+    "games",
+    "entertainment"
+  ],
   "icons": [
+    {
+      "src": "/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
     {
       "src": "/assets/portal-preview.png",
       "sizes": "1200x630",

@@ -58,7 +58,7 @@ $('join').onclick=()=>{const code=$('joinCode').value.trim().toUpperCase();if(!/
 $('joinCode').addEventListener('keydown',e=>{if(e.key==='Enter')$('join').click();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&mode==='local')setPause(true);});
 
-function showHud(on){for(const id of ['bug','chyron','keys'])$(id).hidden=!on;if(!on){$('hold').style.display='none';$('waiting').hidden=true;}
+function showHud(on){for(const id of ['bug','chyron','keys','touchControls'])if($(id))$(id).hidden=!on;if(!on){$('hold').style.display='none';$('waiting').hidden=true;}
  $('sw0').style.background=`linear-gradient(90deg,${TEAMS[0].kit} 55%,${TEAMS[0].kit2} 55%)`;$('sw1').style.background=`linear-gradient(90deg,${TEAMS[1].kit} 55%,${TEAMS[1].kit2} 55%)`;}
 function audioOn(){AU.init();if(AU.c&&AU.c.state==='suspended')AU.c.resume();}
 function startLocal(){
