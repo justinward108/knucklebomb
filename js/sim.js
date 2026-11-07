@@ -42,7 +42,7 @@ function ev(S,name,arg){S.ev.push([name,arg]);}
 
 function newMatch(opts){
  const S={opts,t:0,clock:opts.minutes*60,score:[0,0],players:[],phase:'play',freeze:0,pending:null,msg:null,
-  effects:[],scorches:[],over:false,result:null,stats:{goals:[0,0],dets:[0,0],beheads:[0,0],fouls:[0,0],saves:[0,0]},
+  challenge:null,targets:[-1,-1],targetOwners:[-1,-1],effects:[],scorches:[],over:false,result:null,stats:{goals:[0,0],dets:[0,0],beheads:[0,0],fouls:[0,0],saves:[0,0]},
   rnd:rng(opts.seed||1),shake:0,cut:null,ev:[],humans:[-1,-1],lastPoss:[-1,-1],ctl:[{a:0,b:0,s:0,w:0},{a:0,b:0,s:0,w:0}]};
  const hm=opts.humans||[false,false];
  // a human's side plays with MATE teammates; an AI side plays at the chosen difficulty; demo = both normal
@@ -77,8 +77,44 @@ function stepFreeze(S){
  if(!pd)return;
  if(pd.type==='end'){endMatch(S,pd.reason,pd.loser);return;}
  if(S.clock<=0){endMatch(S,'time');return;}
+ if(pd.type==='challenge'){startChallenge(S);return;}
  if(pd.type==='restart')doRestart(S,pd.team,pd.timer);
  else if(pd.type==='give'){const p=S.players[pd.id];if(!onPitch(p)){const q=nearest(S,p.team,p.x,p.y,true);giveBall(S,q,pd.timer,1.2);}else giveBall(S,p,pd.timer,1.2);}
+}
+function startChallenge(S){
+ placeFormation(S);
+ const ids=[0,1].map(team=>nearest(S,team,CX,CY,true).id);
+ for(const team of [0,1]){const p=S.players[ids[team]];p.x=CX-dirX(team)*1.3;p.y=CY;p.cd=0;
+  if(S.humans[team]>=0)S.humans[team]=p.id;}
+ Object.assign(S.ball,{state:'dead',holder:-1,x:CX,y:CY,z:0,vx:0,vy:0,vz:0,timer:RESTART_TIMER,thrower:-1,lastHolder:-1,lastTeam:-1,grace:0,protect:0,kind:null,receiver:-1});
+ S.challenge={ids,wait:1.5,hp:[3,3],blocks:[0,0],hits:[]};S.phase='challenge';
+ S.msg={text:'CENTRE CHALLENGE',sub:'ONE PLAYER EACH · WAIT FOR THE WHISTLE · WIN THE FIGHT FOR POSSESSION',t:1.5};
+}
+function stepChallenge(S,intents){
+ const ch=S.challenge;
+ if(ch.wait>0){ch.wait-=DT;if(ch.wait<=0){ev(S,'whistle');S.msg={text:'FIGHT FOR POSSESSION',sub:'PUNCH · HOLD SHIFT / RT / BLOCK TO GUARD · THREE HITS TO WIN',t:2};}return;}
+ ch.hits=[];
+ // Set both guards before resolving either fighter's action.
+ for(const id of ch.ids){const p=S.players[id];p.guard=!!intents[id]?.sprint&&p.stun<=0&&!p.action;}
+ for(const id of ch.ids){
+  const p=S.players[id],it={...intents[id]};
+  // Both attack buttons use knuckles in the sanctioned restart fight.
+  it.act=it.act==='tackle'||it.act==='chain'?'tackle':null;
+  if(p.guard){it.act=null;it.mx=(it.mx||0)*0.45;it.my=(it.my||0)*0.45;}it.sprint=false;
+  updatePlayer(S,p,it);
+  const dx=p.x-CX,dy=p.y-CY,d=Math.hypot(dx,dy);
+  if(d>4){p.x=CX+dx/d*4;p.y=CY+dy/d*4;p.vx=p.vy=0;}
+ }
+ // Resolve both fighters' hits together so update order cannot cancel a simultaneous punch.
+ for(const team of ch.hits){ch.hp[team]=Math.max(0,ch.hp[team]-1);S.players[ch.ids[team]].stun=0.22;ev(S,'thud');S.shake=Math.max(S.shake,0.12);}
+ const a=S.players[ch.ids[0]],b=S.players[ch.ids[1]],d=dist(a,b);
+ if(d<0.85){const dx=d>0.001?(b.x-a.x)/d:1,dy=d>0.001?(b.y-a.y)/d:0,push=(0.85-d)/2;a.x-=dx*push;a.y-=dy*push;b.x+=dx*push;b.y+=dy*push;}
+ if(ch.hp[0]>0&&ch.hp[1]>0)return;
+ const team=ch.hp[0]===0&&ch.hp[1]===0?(S.rnd()<0.5?0:1):ch.hp[0]>0?0:1;
+ const winner=S.players[ch.ids[team]],loser=S.players[ch.ids[1-team]];
+ winner.action=null;winner.stun=0;loser.action=null;loser.stun=1.2;winner.guard=loser.guard=false;
+ giveBall(S,winner,RESTART_TIMER,0.7);S.phase='play';S.challenge=null;
+ S.msg={text:`${TEAMS[team].short} WIN THE FIGHT`,sub:'PLAY ON · 30-SECOND BALL',t:1.8};
 }
 function endMatch(S,reason,loser){
  S.over=true;S.phase='over';
@@ -100,6 +136,7 @@ function step(S,intents){
  if(S.cut){S.cut.t+=DT;if(S.cut.t>S.cut.dur)S.cut=null;}
  S.shake=Math.max(0,S.shake-DT*1.6);
  if(S.phase==='freeze'){stepFreeze(S);return;}
+ if(S.phase==='challenge'){stepChallenge(S,intents);return;}
  S.clock-=DT;
  if(S.clock<=0){S.clock=0;if(S.ball.state!=='air'){S.msg={text:'FULL TIME',sub:'',t:3};endMatch(S,'time');return;}}
  for(const p of S.players)updatePlayer(S,p,intents[p.id]);
@@ -139,6 +176,15 @@ function startAction(S,p,it,carrier){
 }
 function facingOK(p,q){const dx=q.x-p.x,dy=q.y-p.y,d=Math.hypot(dx,dy)||1;return (Math.cos(p.face)*dx+Math.sin(p.face)*dy)/d>0.05;}
 function resolveAction(S,p,a){
+ if(S.challenge){
+  const ch=S.challenge,q=S.players[ch.ids[1-p.team]];
+  if(ch.wait<=0&&ch.ids[p.team]===p.id&&a.type==='tackle'&&dist(p,q)<=1.45&&facingOK(p,q)){
+   if(q.guard&&facingOK(q,p)){ch.blocks[q.team]++;ev(S,'thud');S.msg={text:'BLOCKED',sub:`#${q.num} STOPS THE PUNCH · RELEASE BLOCK TO COUNTER`,t:0.7};}
+   else ch.hits.push(q.team);
+  }
+  else if(!a.ai)S.msg={text:'MISSED',sub:'CLOSE IN AND FACE YOUR OPPONENT',t:0.7};
+  return;
+ }
  if(a.type==='release'){const b=S.ball;if(b.state!=='held'||b.holder!==p.id)return;const it=a.it;
   if(it.act==='pass')doPass(S,p,it.to);else if(it.act==='throw')doThrowDir(S,p,it.dx,it.dy);else doShot(S,p,it.aim||0,it.power==null?0.6:it.power);return;}
  const range={tackle:1.45,chain:2.8,behead:2.5}[a.type];
@@ -147,16 +193,16 @@ function resolveAction(S,p,a){
  if(a.type==='behead')return;
  let q=null,qd=1e9;
  for(const o of S.players){if(o.team===p.team||!onPitch(o)||o.stun>0)continue;const d=dist(p,o);if(d<=range*0.85&&d<qd&&(a.type!=='tackle'||facingOK(p,o))){qd=d;q=o;}}
- if(!q)return;
+ if(!q){if(a.ai===false)S.msg={text:'MISSED',sub:'CLOSE THE DISTANCE · FACE THE CARRIER FOR KNUCKLES',t:0.9};return;}
  if(a.ai&&S.rnd()>0.16)return; // AI mostly pulls the blow when it misses the carrier
  foul(S,p,q);
 }
 function hitCarrier(S,p,c,type){
  const b=S.ball;
- if(b.protect>0)return;
+ if(b.protect>0){S.msg={text:'RESTART PROTECTION',sub:'WAIT FOR THE CARRIER TO ENTER PLAY',t:0.8};return;}
  if(type==='behead'){kill(S,c,'behead',p);return;}
- if(type==='chain'){c.stun=1.3;S.shake=Math.max(S.shake,0.3);ev(S,'chain');if(S.rnd()<0.55)fumble(S,c,p);else S.msg={text:'HE HOLDS ON',sub:`#${c.num} DOWN WITH THE BALL · ${Math.ceil(S.ball.timer)}`,t:1.2};return;}
- if(S.rnd()<S.tp[p.team].strip){fumble(S,c,p);c.slow=0.7;ev(S,'thud');}else{c.slow=0.6;ev(S,'thud');}
+ if(type==='chain'){c.stun=1.3;S.shake=Math.max(S.shake,0.3);ev(S,'chain');if(S.rnd()<0.55){fumble(S,c,p);S.msg={text:'CHAIN HIT · LOOSE BALL',sub:'MOVE TO THE BALL TO COLLECT',t:1.1};}else S.msg={text:'HE HOLDS ON',sub:`#${c.num} DOWN WITH THE BALL · ${Math.ceil(S.ball.timer)}`,t:1.2};return;}
+ if(S.rnd()<S.tp[p.team].strip){fumble(S,c,p);c.slow=0.7;ev(S,'thud');S.msg={text:'KNUCKLES · LOOSE BALL',sub:'MOVE TO THE BALL TO COLLECT',t:1.1};}else{c.slow=0.6;ev(S,'thud');S.msg={text:'KNUCKLES HIT',sub:'CARRIER SLOWED · HE KEEPS THE BALL',t:0.9};}
 }
 function fumble(S,c,by){
  const b=S.ball,a=S.rnd()*6.283;
@@ -173,6 +219,7 @@ function kill(S,p,cause,by){
  S.msg={text:cause==='det'?'DETONATION':'STOPPED AT THE NET',sub:'',t:0.9};
  if(n<MIN_PLAYERS){setFreeze(S,3.0,{type:'end',reason:'forfeit',loser:team});S.cut.sub+=` · BELOW ${MIN_PLAYERS} · FORFEIT`;return;}
  const recv=cause==='behead'?by:nearest(S,opp,p.x,p.y,true);
+ S.cut.sub+=` · NEW BALL TO ${TEAMS[recv.team].short} #${recv.num} · ${CATCH_TIMER}s`;
  setFreeze(S,3.0,{type:'give',id:recv.id,timer:CATCH_TIMER});
 }
 function foul(S,off,vic){
@@ -192,7 +239,7 @@ function throwBall(S,p,tx,ty,tz,T,kind,receiver){
 }
 function doPass(S,p,toId){
  const q=S.players[toId];
- if(!q||!onPitch(q)){doThrowDir(S,p,Math.cos(p.face),Math.sin(p.face));return;}
+ if(!q||q.team!==p.team||q.id===p.id||!onPitch(q)){doThrowDir(S,p,Math.cos(p.face),Math.sin(p.face));return;}
  const d=dist(p,q),T=clamp(d/17,0.35,2.0),acc=S.tp[p.team].acc,sd=(0.3+d*0.03)*acc;
  throwBall(S,p,clamp(q.x+q.vx*T*0.9+gauss(S)*sd,0.5,L-0.5),clamp(q.y+q.vy*T*0.9+gauss(S)*sd,0.5,W-0.5),1.3,T,'pass',q.id);
 }
@@ -254,7 +301,7 @@ function catchBall(S,p){const b=S.ball;giveBall(S,p,p.id===b.lastHolder?b.timer:
 function scoreGoal(S,team){
  S.score[team]++;S.stats.goals[team]++;S.ball.state='dead';ev(S,'goal');
  S.msg={text:'GOAL',sub:TEAMS[team].name.toUpperCase(),t:2.7,big:true};
- setFreeze(S,2.7,{type:'restart',team:1-team,timer:RESTART_TIMER});
+ setFreeze(S,2.7,{type:'challenge'});
 }
 function outOfBounds(S){
  const b=S.ball,team=b.lastTeam<0?0:1-b.lastTeam;
@@ -299,7 +346,14 @@ function computeIntents(S,inputs){
  const I={},ctx=makeCtx(S);
  for(const p of S.players){if(!onPitch(p))continue;
   const t=p.team;
+  if(S.challenge&&!S.challenge.ids.includes(p.id))continue;
   if(p.id===S.humans[t]){I[p.id]=inputToIntent(S,t,inputs&&inputs[t]);continue;}
+  if(S.challenge){
+   const q=S.players[S.challenge.ids[1-t]],d=dist(p,q),it=steer(p,{fx:q.x-p.x,fy:q.y-p.y},q.x,q.y,false,1.1);
+   it.sprint=S.challenge.wait<=0&&d<1.8&&Math.sin(S.t*3+t)>0.85;
+   if(S.challenge.wait<=0&&d<=1.45&&p.cd<=0&&!it.sprint)it.act='tackle';
+   it.ai=true;I[p.id]=it;continue;
+  }
   I[p.id]=p.role==='GK'?aiGK(S,p,ctx):aiField(S,p,ctx);}
  return I;
 }
@@ -414,24 +468,31 @@ function inputToIntent(S,team,inp){
  const p=S.players[S.humans[team]];
  if(!inp||!p)return{mx:0,my:0};
  const c=S.ctl[team];
+ const nE=(inp.n||0)!==(c.n||0);c.n=inp.n||0;
  const aE=inp.a!==c.a,bE=inp.b!==c.b,sE=inp.s!==c.s,wE=inp.w!==c.w;
  c.a=inp.a;c.b=inp.b;c.s=inp.s;c.w=inp.w;
  const mx=clamp(+inp.mx||0,-1,1),my=clamp(+inp.my||0,-1,1);
  const it={mx,my,sprint:!!inp.sp,act:null,ai:false};
- if(wE){switchHuman(S,team,true);return it;}
+ if(wE&&!S.challenge){switchHuman(S,team,true);return it;}
  const b=S.ball,carrier=b.state==='held'&&b.holder===p.id;
  if(carrier){
-  if(aE){const t=humanPassTarget(S,p,mx,my);
+  if(nE){const choices=passCandidates(S,p);const old=selectedPassTarget(S,p,mx,my);const i=choices.findIndex(q=>q.id===old?.id);S.targets[team]=choices[(i+1)%choices.length]?.id??-1;S.targetOwners[team]=p.id;}
+  if(aE){const t=selectedPassTarget(S,p,mx,my);
    if(t){it.act='pass';it.to=t.id;}
    else{const f=Math.hypot(mx,my)>0.2?[mx,my]:[Math.cos(p.face),Math.sin(p.face)];it.act='throw';it.dx=f[0];it.dy=f[1];}}
   else if(sE){it.act='shoot';it.aim=my;it.power=clamp(+inp.pw||0,0,1);}
  }else{if(aE)it.act='tackle';else if(bE)it.act='chain';}
  return it;
 }
+function passCandidates(S,p){return S.players.filter(q=>q.team===p.team&&q!==p&&onPitch(q)&&q.stun<=0&&q.role!=='GK'&&dist(p,q)>=2&&dist(p,q)<=42);}
+function selectedPassTarget(S,p,mx=0,my=0){
+ const locked=S.targetOwners?.[p.team]===p.id?S.targets?.[p.team]:-1;
+ return passCandidates(S,p).find(q=>q.id===locked)||humanPassTarget(S,p,mx,my);
+}
 function humanPassTarget(S,p,mx,my){
  let dx=mx,dy=my;if(Math.hypot(dx,dy)<0.2){dx=Math.cos(p.face);dy=Math.sin(p.face);}const dl=Math.hypot(dx,dy);dx/=dl;dy/=dl;
  let best=null,bs=-1e9;
- for(const q of S.players){if(q.team!==p.team||q===p||!onPitch(q)||q.role==='GK')continue;const vx=q.x-p.x,vy=q.y-p.y,d=Math.hypot(vx,vy);if(d<2||d>42)continue;
+ for(const q of passCandidates(S,p)){const vx=q.x-p.x,vy=q.y-p.y,d=Math.hypot(vx,vy);if(d<2||d>42)continue;
   const cos=(vx*dx+vy*dy)/d;if(cos<0.55)continue;let rec=99;for(const o of S.players)if(o.team!==p.team&&onPitch(o))rec=Math.min(rec,dist(o,q));
   const sc=cos*2-d*0.02+Math.min(rec,6)*0.12;if(sc>bs){bs=sc;best=q;}}
  return best;
@@ -443,6 +504,7 @@ function switchHuman(S,team,manual){
  if(best)S.humans[team]=best.id;
 }
 function autoSwitch(S){
+ if(S.challenge)return;
  const b=S.ball,poss=b.state==='held'?S.players[b.holder].team:-1;
  for(const team of [0,1]){
   if(S.humans[team]<0)continue;
@@ -451,11 +513,12 @@ function autoSwitch(S){
   if(b.state==='held'){const c=S.players[b.holder];if(c.team===team&&c.role!=='GK'){S.humans[team]=c.id;done=true;}}
   if(!done&&b.state==='air'&&b.lastTeam===team&&b.receiver>=0){const r=S.players[b.receiver];if(r.team===team&&r.role!=='GK'&&onPitch(r)){S.humans[team]=r.id;done=true;}}
   if(!done&&(!onPitch(cur)||(poss>=0&&poss!==team&&S.lastPoss[team]===team)))switchHuman(S,team,false);
+  if(b.state!=='held'||b.holder!==S.targetOwners[team]){S.targets[team]=-1;S.targetOwners[team]=-1;}
   S.lastPoss[team]=poss;
  }
 }
 /** One fixed step of a match. inputs = [team0Input|null, team1Input|null]. */
-function tick(S,inputs){autoSwitch(S);step(S,computeIntents(S,inputs));}
+function tick(S,inputs,filterIntents){autoSwitch(S);const intents=computeIntents(S,inputs);step(S,filterIntents?filterIntents(intents):intents);}
 
 /* =====================================================================
    SNAPSHOTS — what the server sends; decode gives the renderer an S-shaped view.
@@ -465,9 +528,9 @@ const r2=v=>Math.round(v*100)/100;
 function staticInfo(S){return{opts:S.opts,players:S.players.map(p=>[p.team,p.slot,p.role,p.num,p.skin,p.hasChain?1:0])};}
 function snapshot(S,events){
  const P=[];
- for(const p of S.players){const a=p.action;P.push(r2(p.x),r2(p.y),r2(p.vx),r2(p.vy),r2(p.face),(p.alive?1:0)|(p.bench>0?2:0)|(p.stun>0?4:0),a?ACT.indexOf(a.type):0,a?r2(a.t):0,a?r2(a.dur):0);}
+ for(const p of S.players){const a=p.action;P.push(r2(p.x),r2(p.y),r2(p.vx),r2(p.vy),r2(p.face),(p.alive?1:0)|(p.bench>0?2:0)|(p.stun>0?4:0)|(p.guard?8:0),a?ACT.indexOf(a.type):0,a?r2(a.t):0,a?r2(a.dur):0);}
  const b=S.ball;
- return{t:r2(S.t),ph:S.phase,clk:r2(S.clock),sc:S.score,hu:S.humans,sh:r2(S.shake),p:P,
+ return{ch:S.challenge,targets:S.targets,owners:S.targetOwners,t:r2(S.t),ph:S.phase,clk:r2(S.clock),sc:S.score,hu:S.humans,sh:r2(S.shake),p:P,
   b:[BST.indexOf(b.state),b.holder,r2(b.x),r2(b.y),r2(b.z),r2(b.timer)],
   msg:S.msg?[S.msg.text,S.msg.sub||'',r2(S.msg.t)]:null,
   cut:S.cut?[r2(S.cut.t),S.cut.dur,S.cut.delay,S.cut.text,S.cut.sub]:null,
@@ -486,12 +549,12 @@ function applySnapshot(V,a,b,alpha){
  const A=a.p,B=b?b.p:a.p;
  for(let i=0;i<V.players.length;i++){const p=V.players[i],o=i*9;
   p.x=lerp(A[o],B[o]);p.y=lerp(A[o+1],B[o+1]);p.vx=A[o+2];p.vy=A[o+3];p.face=lerpA(A[o+4],B[o+4]);
-  const f=A[o+5];p.alive=!!(f&1);p.bench=f&2?1:0;p.stun=f&4?1:0;
+  const f=A[o+5];p.alive=!!(f&1);p.bench=f&2?1:0;p.stun=f&4?1:0;p.guard=!!(f&8);
   p.action=A[o+6]?{type:ACT[A[o+6]],t:A[o+7],dur:A[o+8]}:null;}
  const ba=a.b,bb=b?b.b:a.b,ball=V.ball;
  ball.state=BST[ba[0]];ball.holder=ba[1];ball.timer=ba[5];
  const same=ba[0]===bb[0];ball.x=same?lerp(ba[2],bb[2]):ba[2];ball.y=same?lerp(ba[3],bb[3]):ba[3];ball.z=same?lerp(ba[4],bb[4]):ba[4];
- V.t=a.t;V.phase=a.ph;V.clock=a.clk;V.score=a.sc;V.humans=a.hu;V.shake=a.sh;
+ V.challenge=a.ch||null;V.targets=a.targets||[-1,-1];V.targetOwners=a.owners||[-1,-1];V.t=a.t;V.phase=a.ph;V.clock=a.clk;V.score=a.sc;V.humans=a.hu;V.shake=a.sh;
  V.msg=a.msg?{text:a.msg[0],sub:a.msg[1],t:a.msg[2]}:null;
  V.cut=a.cut?{t:a.cut[0],dur:a.cut[1],delay:a.cut[2],text:a.cut[3],sub:a.cut[4]}:null;
  V.effects=a.fx.map(e=>({type:e[0],x:e[1],y:e[2],t:e[3],dur:e[4],seed:e[5],dir:e[6]}));
@@ -504,7 +567,7 @@ function applySnapshot(V,a,b,alpha){
    ===================================================================== */
 const CREDIT_MULT={easy:0.5,normal:1,hard:1.5,online:2};
 function payout(S,team){
- const r=S.result;if(!r)return{total:0,lines:[]};
+ const r=S.result;if(!r||S.opts.practice)return{total:0,lines:[]};
  const won=r.winner===team,draw=r.winner<0,forfeited=(r.reason==='forfeit'||r.reason==='left')&&r.loser===team;
  const lines=[[won?'Win':draw?'Draw':forfeited?'Forfeit':'Loss',won?100:draw?40:forfeited?0:10],
   [`Goals ×${S.score[team]}`,S.score[team]*15],[`Men standing ×${aliveCount(S,team)}`,aliveCount(S,team)*5]];
@@ -514,4 +577,4 @@ function payout(S,team){
 }
 
 export{L,W,CX,CY,DT,GOAL_HW,GOAL_ZLO,GOAL_ZHI,BOX_R,MIN_PLAYERS,TEAMS,rng,clamp,onPitch,aliveCount,dirX,
- newMatch,tick,snapshot,staticInfo,makeView,applySnapshot,payout,NOINPUT};
+ giveBall,startChallenge,selectedPassTarget,newMatch,tick,snapshot,staticInfo,makeView,applySnapshot,payout,NOINPUT};

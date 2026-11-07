@@ -1,5 +1,5 @@
 // Poor Camp Studio — Offline-Capable PWA & Capacitor Service Worker
-const CACHE_NAME = "poorcamp-knucklebomb-v1";
+const CACHE_NAME = "poorcamp-knucklebomb-v4-restart-fight";
 const PRECACHE_URLS = [
   "./",
   "manifest.webmanifest"

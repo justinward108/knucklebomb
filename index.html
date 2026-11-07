@@ -37,18 +37,26 @@
 <div id="hold" class="hud"><div class="n" id="hn">15</div><div class="bars"><div class="lbl">BALL TIMER</div><div class="bar"><i id="hb"></i></div><div class="lbl">THROW POWER</div><div class="bar"><i id="pb" style="background:var(--red)"></i></div></div></div>
 <div id="waiting" class="hud" hidden></div>
 <div id="chyron" class="hud" hidden>KNUCKLEBOMB — EXHIBITION</div>
-<div id="keys" class="hud" hidden><b>WASD</b> move · <b>Shift</b> sprint · <b>J</b> pass / tackle · <b>K</b> hold &amp; release to shoot / chain swing · <b>Q</b> switch · <b>P</b> pause · <b>M</b> mute</div>
+<div id="actionHelp" class="hud" hidden></div>
+<div id="keys" class="hud" hidden><b>WASD</b> move · <b>Shift</b> sprint · <b>J</b> pass / tackle · <b>K</b> hold &amp; release to shoot / chain swing · <b>E</b> target · <b>Q</b> switch · <b>P</b> pause · <b>M</b> mute</div>
 <div id="touchControls" class="touch-hud" hidden aria-label="Touch controls">
   <button type="button" id="touchPause" class="t-pause" aria-label="Pause match">PAUSE</button>
   <div id="touchStick" class="t-stick" aria-label="Virtual movement thumbstick"><div id="touchNub" class="t-nub"></div></div>
   <div class="t-actions">
+    <button type="button" id="touchTarget" class="t-btn t-sm">TARGET</button>
     <button type="button" id="touchSwitch" class="t-btn t-sm">SWITCH</button>
     <button type="button" id="touchSprint" class="t-btn t-sm">SPRINT</button>
     <button type="button" id="touchPass" class="t-btn t-lg t-gold">PASS / TACKLE</button>
-    <button type="button" id="touchShoot" class="t-btn t-lg t-red">SHOOT / CHAIN</button>
+    <button type="button" id="touchShoot" class="t-btn t-lg t-red">SHOOT / ATTACK</button>
   </div>
 </div>
 
+<section id="practicePanel" hidden aria-label="Practice drill">
+  <h2 id="practiceTitle"></h2>
+  <p id="practiceInstruction"></p>
+  <p id="practiceFeedback" role="status" aria-live="polite"></p>
+  <div class="practice-buttons"><button type="button" id="practiceRetry">RETRY DRILL</button><button type="button" id="practiceNext" disabled>NEXT DRILL</button><button type="button" id="practiceExit">EXIT PRACTICE</button></div>
+</section>
 <div class="overlay" id="menu">
   <div class="card">
     <div class="eyebrow">TONIGHT UNDER THE FLOODLIGHTS</div>
@@ -56,8 +64,8 @@
     <p class="lede">Eleven a side. The ball is a bomb. Throw it before the timer reaches zero; in the air it cannot go off. The only foul is hurting a man who does not have the ball.</p>
     <div class="row"><label>YOUR TEAM</label>
       <div class="teams">
-        <button class="opt team" id="pick0" aria-pressed="true"><i class="kit" style="background:linear-gradient(90deg,#f3efe2 60%,#d6a422 60%)"></i><span><span class="nm">Houston Deacons</span><br><span class="meta">WHITE &amp; GOLD · PASSING CHAIN</span></span></button>
-        <button class="opt team" id="pick1" aria-pressed="false"><i class="kit" style="background:linear-gradient(90deg,#17181d 60%,#cf2730 60%)"></i><span><span class="nm">Columbus Vanguard</span><br><span class="meta">BLACK &amp; RED · LONG CARRIES</span></span></button>
+        <button class="opt team" id="pick0" aria-pressed="true"><img src="assets/teams/kb-houston-primary-emblem-v01.png" alt="" width="38" height="38" style="border-radius:6px;object-fit:contain;background:#0e141d;padding:2px"><i class="kit" style="background:linear-gradient(90deg,#f3efe2 60%,#d6a422 60%)"></i><span><span class="nm">Houston Deacons</span><br><span class="meta">WHITE &amp; GOLD · PASSING CHAIN</span></span></button>
+        <button class="opt team" id="pick1" aria-pressed="false"><img src="assets/teams/kb-columbus-primary-emblem-v01.png" alt="" width="38" height="38" style="border-radius:6px;object-fit:contain;background:#0e141d;padding:2px"><i class="kit" style="background:linear-gradient(90deg,#17181d 60%,#cf2730 60%)"></i><span><span class="nm">Columbus Vanguard</span><br><span class="meta">BLACK &amp; RED · LONG CARRIES</span></span></button>
       </div>
     </div>
     <div class="row"><label>OPPOSITION</label>
@@ -71,6 +79,7 @@
       <button class="go" id="start">PLAY THE AI</button>
       <button class="go alt" id="onlineBtn">ONLINE MATCH</button>
     </div>
+    <button class="go alt" id="practiceBtn">PRACTICE · LEARN THE CONTROLS</button>
     <div class="online" id="onlinePanel" hidden>
       <div class="line"><button class="opt" id="create">Create match</button><span class="code" id="roomCode"></span></div>
       <div class="line"><input id="joinCode" maxlength="6" placeholder="CODE" aria-label="Room code" autocomplete="off"><button class="opt" id="join">Join match</button></div>
@@ -79,10 +88,10 @@
     <div class="legend">
       <div><b>WASD / Arrows</b> move</div><div><b>Shift</b> sprint</div>
       <div><b>J / Space</b> pass (with ball) · tackle</div><div><b>K</b> hold, release to shoot · chain swing</div>
-      <div><b>Q</b> switch to player nearest the ball</div><div><b>P / Esc</b> pause · <b>M</b> mute</div>
-      <div><b>Gamepad</b> stick · A pass/tackle · B shoot/chain · X switch · RT sprint</div>
+      <div><b>E</b> target · <b>Q</b> switch to player nearest the ball</div><div><b>P / Esc</b> pause · <b>M</b> mute</div>
+      <div><b>Gamepad</b> stick · A pass/knuckles · B shoot/attack · LB target · X switch · RT sprint</div>
     </div>
-    <p class="note">Keyboard or gamepad required. Defenders carry the ball-and-chain; the goalkeeper guards the box.</p>
+    <p class="note">Keyboard, gamepad or touch. E / LB / TARGET cycles and locks the highlighted receiver. Aim shots up/down while charging; release to throw. Only defenders carry chains; other field players use knuckles. Injuring a player without the ball is a foul during team play. Loose balls are collected automatically. After a goal, one player per team has a short knuckle fight for possession. Close in, face your opponent and land three hits to win the ball. Hold Shift / RT / BLOCK to guard against incoming punches; release to counter.</p>
   </div>
 </div>
 
@@ -92,7 +101,7 @@
 </div>
 
 <div class="overlay" id="end" hidden>
-  <div class="card"><div class="eyebrow" id="endEye">FULL TIME</div><div class="final" id="endScore"></div><p class="lede" id="endLine"></p>
+  <div class="card"><div class="eyebrow" id="endEye">FULL TIME</div><div class="final" id="endScore"></div><img id="endPlate" src="assets/art/kb-victory.png" alt="" style="width:100%;max-height:150px;object-fit:cover;border-radius:8px;margin:8px 0;border:1px solid rgba(255,255,255,.18)"><p class="lede" id="endLine"></p>
     <table class="stats" id="endStats"></table>
     <table class="payout" id="endPay"></table>
     <div class="btns"><button class="go" id="again">REMATCH</button><button class="go alt" id="toMenu">MENU</button></div></div>

@@ -1,7 +1,7 @@
 /* Knucklebomb renderer — draws any S-shaped state (a local match or a decoded
    server snapshot). Angled broadcast camera, painter's sort by depth.
    v2: module; highlights the viewer's own player via render(S,dt,{you,radar,heat}). */
-import{L,W,CX,CY,GOAL_HW,GOAL_ZLO,GOAL_ZHI,BOX_R,TEAMS,rng,clamp,onPitch,dirX}from'./sim.js';
+import{L,W,CX,CY,GOAL_HW,GOAL_ZLO,GOAL_ZHI,BOX_R,TEAMS,rng,clamp,onPitch,dirX,selectedPassTarget}from'./sim.js';
 /* =====================================================================
    RENDER — angled broadcast camera, painter's sort by depth.
    ===================================================================== */
@@ -12,6 +12,7 @@ addEventListener('resize',resize);resize();
 const TH=33*Math.PI/180,CT=Math.cos(TH),ST=Math.sin(TH);
 const cam={lx:CX,ly:CY,D:64,f:800,px:0,py:0,pz:0,ox:0,oy:0};
 function updateCam(S,dt){
+ if(S.challenge){cam.lx=CX;cam.ly=CY-2;}
  const b=S.ball;let rx=b.x,ry=b.y;
  if(b.state==='held'){const p=S.players[b.holder];rx=p.x+dirX(p.team)*6;ry=p.y;}
  if(b.state==='dead'&&S.cut==null){}
@@ -21,7 +22,7 @@ function updateCam(S,dt){
  const ty=CY+(ry-CY)*0.3-2;
  const k=Math.min(1,dt*2.6);cam.lx+=(tx-cam.lx)*k;cam.ly+=(ty-cam.ly)*k;
  cam.px=cam.lx;cam.py=cam.ly-cam.D*CT;cam.pz=cam.D*ST;
- const sh=S.shake*S.shake*14;cam.ox=(Math.random()-0.5)*sh;cam.oy=(Math.random()-0.5)*sh;
+ const sh=S.shake*S.shake*14;cam.ox=(Math.random()-0.5)*sh;cam.oy=(Math.random()-0.5)*sh+(S.challenge&&VH<500?VH*0.16:0);
 }
 function P(x,y,z){const dx=x-cam.px,dy=y-cam.py,dz=z-cam.pz;const zc=dy*CT-dz*ST;if(zc<0.5)return null;const yc=dy*ST+dz*CT,s=cam.f/zc;return{x:VW/2+dx*s+cam.ox,y:VH*0.54-yc*s+cam.oy,s};}
 function poly(pts){g.beginPath();let ok=false;for(const q of pts){const r=P(q[0],q[1],q[2]||0);if(!r)continue;if(!ok){g.moveTo(r.x,r.y);ok=true;}else g.lineTo(r.x,r.y);}g.closePath();}
@@ -100,6 +101,7 @@ function drawPlayer(S,p,isHuman){
  const shL=[tx+h*0.02,ty+h*0.04],shR=[tx+h*0.28,ty+h*0.04];let hL,hR;
  if(carrier&&p.action&&p.action.type==='release'){hL=[fx-side*h*0.05,ty-h*0.12];hR=[fx-side*h*0.12,ty-h*0.18];}
  else if(carrier){hL=[fx+lean+side*h*0.16,ty+h*0.2];hR=[fx+lean+side*h*0.22,ty+h*0.18];}
+ else if(p.guard){hL=[fx+side*h*0.12,ty-h*0.02];hR=[fx+side*h*0.18,ty+h*0.02];}
  else if(p.action&&p.action.type==='behead'){const k=p.action.t/p.action.dur;hL=[fx+side*h*(0.1+k*0.4),ty-h*0.1+k*h*0.2];hR=[fx+side*h*(0.15+k*0.4),ty-h*0.05+k*h*0.2];}
  else{hL=[shL[0]-h*0.04-sw*0.6,ty+h*0.32];hR=[shR[0]+h*0.04+sw*0.6,ty+h*0.32];}
  g.moveTo(shL[0],shL[1]);g.lineTo(hL[0],hL[1]);g.moveTo(shR[0],shR[1]);g.lineTo(hR[0],hR[1]);g.stroke();
@@ -126,6 +128,16 @@ function drawBall(S){
  g.save();g.shadowColor=col;g.shadowBlur=12*blink;g.strokeStyle=col;g.globalAlpha=b.state==='held'?blink:0.55;g.lineWidth=Math.max(1.5,rad*0.35);g.beginPath();g.arc(r.x,r.y,rad*0.85,0,6.283);g.stroke();g.restore();
 }
 function drawBallShadow(S){const b=S.ball;if(b.state==='dead'||b.state==='held')return;const r=P(b.x,b.y,0);if(!r)return;g.fillStyle='rgba(0,0,0,.4)';g.beginPath();g.ellipse(r.x,r.y,r.s*0.3,r.s*0.12,0,0,6.283);g.fill();}
+function drawFightBars(S){
+ const ch=S.challenge;if(!ch)return;
+ for(const team of [0,1]){const p=S.players[ch.ids[team]],r=P(p.x,p.y,2.65);if(!r)continue;
+  const offset=p.x<=S.players[ch.ids[1-team]].x?-23:23,x=r.x+offset;
+  g.save();g.fillStyle='rgba(8,11,16,.95)';g.fillRect(x-24,r.y-14,48,19);
+  for(let i=0;i<3;i++){g.fillStyle=i<ch.hp[team]?(p.guard?'#58e6ff':'#ffe16b'):'#434851';g.fillRect(x-20+i*14,r.y-10,12,10);}
+  if(p.guard){g.fillStyle='#58e6ff';g.font='bold 12px Arial';g.textAlign='center';g.fillText('BLOCK',x,r.y-19);}
+  g.restore();
+ }
+}
 function drawTimerLabel(S){
  const b=S.ball;if(b.state==='dead')return;
  let r;if(b.state==='held'){const p=S.players[b.holder];r=P(p.x,p.y,2.55);}else r=P(b.x,b.y,b.z+0.7);
@@ -165,11 +177,14 @@ function drawRef(S){
  for(let i=0;i<5;i++){g.fillStyle=i%2?'#111':'#d8d8d8';g.fillRect(r.x-h*0.15+i*h*0.06,r.y-h*0.83,h*0.06,h*0.38);}
  g.fillStyle='#b98a66';g.beginPath();g.arc(r.x,r.y-h*0.9,h*0.08,0,6.283);g.fill();
 }
+const crowdPlate=typeof Image!=='undefined'?new Image():null;
+if(crowdPlate)crowdPlate.src='assets/art/kb-crowd.png';
 function drawCrowdCut(S){
  const c=S.cut;if(!c||c.t<c.delay)return;
  const k=(c.t-c.delay),a=Math.min(1,k*6)*Math.min(1,(c.dur-c.t)*4);
  g.save();g.globalAlpha=a;
  const bg=g.createLinearGradient(0,0,0,VH);bg.addColorStop(0,'#1a1410');bg.addColorStop(1,'#0b0908');g.fillStyle=bg;g.fillRect(0,0,VW,VH);
+ if(crowdPlate&&crowdPlate.complete&&crowdPlate.naturalWidth>0){const sc=Math.max(VW/crowdPlate.naturalWidth,VH/crowdPlate.naturalHeight),dw=crowdPlate.naturalWidth*sc,dh=crowdPlate.naturalHeight*sc;g.drawImage(crowdPlate,(VW-dw)/2,(VH-dh)/2,dw,dh);}
  const r=rng(9);
  for(let row=0;row<9;row++){const y=VH*0.18+row*VH*0.11,sz=VH*(0.035+row*0.012);for(let x=-sz;x<VW+sz;x+=sz*1.25){const bob=Math.sin(S.t*6+x*0.05+row)*sz*0.12*(row%2?1:-1);const t=r();
   g.fillStyle=t<0.15?'#f3efe2':t<0.25?'#d6a422':t<0.35?'#cf2730':['#3b3330','#4a403a','#2e2826','#57493f'][Math.floor(r()*4)];g.fillRect(x-sz*0.4,y+sz*0.35+bob,sz*0.8,sz*1.2);
@@ -190,12 +205,29 @@ function drawRadar(S){
   if(p.id===YOU){g.strokeStyle='#58e6ff';g.lineWidth=1.5;g.stroke();}}
  const b=S.ball;if(b.state!=='dead'){g.fillStyle='#fff';g.fillRect(X(b.x)-1.5,Y(b.y)-1.5,3,3);}
 }
+function drawGuides(S,o){
+ const p=S.players[o.you];if(!p||!onPitch(p)||S.phase==='freeze'||S.over)return;
+ g.save();g.lineWidth=2;g.strokeStyle='#58e6ff';
+ const circle=(q,r)=>{const pts=[];for(let i=0;i<=48;i++){const a=i/48*Math.PI*2;pts.push([q.x+Math.cos(a)*r,q.y+Math.sin(a)*r,0.06]);}line3(pts);};
+ if(S.ball.state==='held'&&S.ball.holder===p.id){
+  const it=o.controls||{},q=selectedPassTarget(S,p,it.mx,it.my);
+  if(q){g.strokeStyle='#ffe16b';g.setLineDash([7,5]);line3([[p.x,p.y,0.1],[q.x,q.y,0.1]]);g.setLineDash([]);circle(q,1.2);
+   const r=P(q.x,q.y,3.2);if(r){g.fillStyle='#ffe16b';g.font='bold 16px Arial';g.textAlign='center';g.fillText(`PASS #${q.num}`,r.x,r.y);}}
+  if(o.charge>0){const x=p.team===0?L:0,y=CY+clamp(it.my||0,-1,1)*(GOAL_HW-0.5);
+   g.strokeStyle='#58e6ff';line3([[p.x,p.y,1.5],[x,y,2]]);const r=P(x,y,2);if(r){g.beginPath();g.arc(r.x,r.y,9,0,Math.PI*2);g.stroke();}}
+ }else if(!S.challenge){const carrier=S.ball.state==='held'?S.players[S.ball.holder]:null;
+  const range=p.role==='GK'?2.5:p.hasChain?2.8:1.45;
+  g.strokeStyle=carrier&&carrier.team!==p.team&&Math.hypot(carrier.x-p.x,carrier.y-p.y)<=range?'#ffe16b':'rgba(88,230,255,.55)';circle(p,range);
+  if(p.hasChain){g.setLineDash([3,4]);circle(p,1.45);g.setLineDash([]);}}
+ g.restore();
+}
 export function render(S,dt,o){
  YOU=o.you;crowdHeat=o.heat;
  g.setTransform(DPR,0,0,DPR,0,0);
  updateCam(S,dt);
  drawWorld(S);
  drawBallShadow(S);
+ drawGuides(S,o);
  const ents=[];
  for(const p of S.players)if(onPitch(p))ents.push({y:p.y,f:()=>drawPlayer(S,p,p.id===YOU)});
  ents.push({y:CY+GOAL_HW+0.01,f:()=>{drawGoal(0);drawGoal(L);}});
@@ -204,7 +236,7 @@ export function render(S,dt,o){
  ents.sort((a,c)=>c.y-a.y);
  drawSideline(S);
  for(const e of ents)e.f();
- drawEffects(S);drawTimerLabel(S);
+ drawEffects(S);drawTimerLabel(S);drawFightBars(S);
  drawCrowdCut(S);
  if(o.radar)drawRadar(S);
 }
