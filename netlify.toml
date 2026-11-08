@@ -37,3 +37,10 @@
   to = "https://poor.camp/api/sso/logout"
   status = 200
   force = true
+
+# Private, unranked human exhibition rooms.
+[[redirects]]
+  from = "/api/knucklebomb-online"
+  to = "https://poor.camp/api/knucklebomb-online"
+  status = 200
+  force = true

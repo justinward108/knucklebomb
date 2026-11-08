@@ -2,6 +2,7 @@
    Sends inputs at 20Hz (and immediately on any button press); renders server snapshots
    100ms in the past, blending between the two that bracket that moment.
    v1 */
+import{connectExhibition}from'./exhibition-net.js';
 import{SERVER}from'./config.js';
 import{makeView,applySnapshot}from'./sim.js';
 
@@ -14,10 +15,12 @@ export function onlineAvailable(){
  const b=serverBase();if(!b)return false;
  if(SERVER)return true;
  // with no SERVER configured, only a page served by the Worker itself (workers.dev, wrangler dev) has the API
- return /(^localhost$)|(^127\.0\.0\.1$)|(\.workers\.dev$)/.test(location.hostname);
+ return location.protocol==='http:'||location.protocol==='https:';
 }
 
-export function connectRoom({code,create,team,minutes,pid,token,on}){
+export function legacyCreditsAvailable(){return Boolean(SERVER);}
+export function connectRoom({code,create,team,minutes,pid,token,home,away,on}){
+ if(!SERVER)return connectExhibition({code,create,team,minutes,home,away,on});
  const base=serverBase().replace(/^http/,'ws');
  const q=new URLSearchParams({pid,minutes:String(minutes),team:String(team)});
  if(create)q.set('create','1');if(token)q.set('token',token);

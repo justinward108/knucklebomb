@@ -1,7 +1,7 @@
 /* Knucklebomb renderer — draws any S-shaped state (a local match or a decoded
    server snapshot). Angled broadcast camera, painter's sort by depth.
    v2: module; highlights the viewer's own player via render(S,dt,{you,radar,heat}). */
-import{L,W,CX,CY,GOAL_HW,GOAL_ZLO,GOAL_ZHI,BOX_R,TEAMS,rng,clamp,onPitch,dirX,selectedPassTarget}from'./sim.js';
+import{L,W,CX,CY,GOAL_HW,GOAL_ZLO,GOAL_ZHI,BOX_R,TEAMS,matchTeams,rng,clamp,onPitch,dirX,selectedPassTarget}from'./sim.js';
 /* =====================================================================
    RENDER — angled broadcast camera, painter's sort by depth.
    ===================================================================== */
@@ -81,7 +81,7 @@ function drawGoal(gx){
 export function timerColor(t){return t>10?'#ffd34d':t>5?'#ff9a2e':'#ff3b30';}
 function drawPlayer(S,p,isHuman){
  const F=P(p.x,p.y,0),H=P(p.x,p.y,1.85);if(!F||!H)return;
- const h=F.y-H.y,s=F.s,T=TEAMS[p.team],gk=p.role==='GK';
+ const h=F.y-H.y,s=F.s,T=matchTeams(S)[p.team],gk=p.role==='GK';
  const kit=gk?T.gk:T.kit,trim=gk?T.gk2:T.kit2,fx=F.x,fy=F.y;
  g.fillStyle='rgba(0,0,0,.38)';g.beginPath();g.ellipse(fx,fy,0.55*s,0.22*s,0,0,Math.PI*2);g.fill();
  if(isHuman){g.strokeStyle='#58e6ff';g.lineWidth=2.5;g.beginPath();g.ellipse(fx,fy,0.9*s,0.36*s,0,0,Math.PI*2);g.stroke();}
@@ -165,8 +165,8 @@ function drawSideline(S){
  const b=S.ball;const ents=[];
  for(const team of [0,1]){const x=team===0?CX-14:CX+14;const r=P(x,W+0.9,0),hd=P(x,W+0.9,1.8);if(!r||!hd)continue;const h=r.y-hd.y;
   const near=b.state==='held'&&Math.abs(b.x-x)<30;const wave=near?Math.sin(S.t*9+team)*h*0.2:0;
-  g.fillStyle=TEAMS[team].coach;g.fillRect(r.x-h*0.14,r.y-h*0.82,h*0.28,h*0.82);g.fillStyle='#e8e2d4';g.fillRect(r.x-h*0.03,r.y-h*0.8,h*0.06,h*0.2);
-  g.strokeStyle=TEAMS[team].coach;g.lineWidth=Math.max(1.4,h*0.07);g.beginPath();g.moveTo(r.x+h*0.12,r.y-h*0.75);g.lineTo(r.x+h*0.25,r.y-h*1.0-wave);g.stroke();
+  g.fillStyle=matchTeams(S)[team].coach;g.fillRect(r.x-h*0.14,r.y-h*0.82,h*0.28,h*0.82);g.fillStyle='#e8e2d4';g.fillRect(r.x-h*0.03,r.y-h*0.8,h*0.06,h*0.2);
+  g.strokeStyle=matchTeams(S)[team].coach;g.lineWidth=Math.max(1.4,h*0.07);g.beginPath();g.moveTo(r.x+h*0.12,r.y-h*0.75);g.lineTo(r.x+h*0.25,r.y-h*1.0-wave);g.stroke();
   g.fillStyle='#c9a080';g.beginPath();g.arc(r.x,r.y-h*0.9,h*0.085,0,6.283);g.fill();}
 }
 const REF={x:CX,y:CY-8};
@@ -201,7 +201,7 @@ function drawRadar(S){
  g.fillStyle='rgba(8,11,16,.78)';g.fillRect(x0-6,y0-6,w+12,h+12);g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=1;g.strokeRect(x0,y0,w,h);
  g.beginPath();g.moveTo(x0+w/2,y0);g.lineTo(x0+w/2,y0+h);g.stroke();
  const X=x=>x0+x/L*w,Y=y=>y0+h-y/W*h;
- for(const p of S.players){if(!onPitch(p))continue;g.fillStyle=p.role==='GK'?TEAMS[p.team].gk:(p.team===0?TEAMS[0].kit2:TEAMS[1].kit2);g.beginPath();g.arc(X(p.x),Y(p.y),p.id===YOU?3.6:2.4,0,6.283);g.fill();
+ for(const p of S.players){if(!onPitch(p))continue;g.fillStyle=p.role==='GK'?matchTeams(S)[p.team].gk:(p.team===0?matchTeams(S)[0].kit2:matchTeams(S)[1].kit2);g.beginPath();g.arc(X(p.x),Y(p.y),p.id===YOU?3.6:2.4,0,6.283);g.fill();
   if(p.id===YOU){g.strokeStyle='#58e6ff';g.lineWidth=1.5;g.stroke();}}
  const b=S.ball;if(b.state!=='dead'){g.fillStyle='#fff';g.fillRect(X(b.x)-1.5,Y(b.y)-1.5,3,3);}
 }

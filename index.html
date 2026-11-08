@@ -25,7 +25,7 @@
 <script type="application/ld+json" data-portal-schema>{"@context":"https://schema.org","@type":"WebPage","url":"https://knucklebomb.poor.camp/","name":"Knucklebomb","isPartOf":{"@type":"WebSite","name":"Knucklebomb","url":"https://knucklebomb.poor.camp/"}}</script>
 </head>
 <body>
-<canvas id="c" aria-label="Knucklebomb match broadcast"></canvas>
+<canvas id="c" aria-label="Knucklebomb match broadcast"></canvas><button type="button" id="leaveExhibition" class="hud leave-exhibition" hidden>LEAVE EXHIBITION</button>
 
 <div id="bug" class="hud" hidden>
   <div class="live">LIVE</div>
@@ -62,7 +62,8 @@
     <div class="eyebrow">TONIGHT UNDER THE FLOODLIGHTS</div>
     <h1>KNUCKLE<span>BOMB</span></h1>
     <p class="lede">Eleven a side. The ball is a bomb. Throw it before the timer reaches zero; in the air it cannot go off. The only foul is hurting a man who does not have the ball.</p>
-    <div class="row"><label>YOUR TEAM</label>
+    <section class="exhibition-setup" aria-labelledby="exhibitionTitle"><h2 id="exhibitionTitle">OPEN EXHIBITIONS</h2><p id="exhibitionStatus" role="status">Exhibition matches are available between seasons.</p><div class="club-selectors"><label for="homeClub">HOME CLUB</label><select id="homeClub"></select><label for="awayClub">AWAY CLUB</label><select id="awayClub"></select></div><p><a href="https://poor.camp/knucklebomb/">League office</a></p></section>
+    <div class="row"><label>PLAY AS</label>
       <div class="teams">
         <button class="opt team" id="pick0" aria-pressed="true"><img src="assets/teams/kb-houston-primary-emblem-v01.png" alt="" width="38" height="38" style="border-radius:6px;object-fit:contain;background:#0e141d;padding:2px"><i class="kit" style="background:linear-gradient(90deg,#f3efe2 60%,#d6a422 60%)"></i><span><span class="nm">Houston Deacons</span><br><span class="meta">WHITE &amp; GOLD · PASSING CHAIN</span></span></button>
         <button class="opt team" id="pick1" aria-pressed="false"><img src="assets/teams/kb-columbus-primary-emblem-v01.png" alt="" width="38" height="38" style="border-radius:6px;object-fit:contain;background:#0e141d;padding:2px"><i class="kit" style="background:linear-gradient(90deg,#17181d 60%,#cf2730 60%)"></i><span><span class="nm">Columbus Vanguard</span><br><span class="meta">BLACK &amp; RED · LONG CARRIES</span></span></button>
@@ -76,14 +77,14 @@
     </div>
     <div class="credits"><small>RAPTURE CREDITS</small><span id="bal">—</span></div>
     <div class="btns">
-      <button class="go" id="start">PLAY THE AI</button>
-      <button class="go alt" id="onlineBtn">ONLINE MATCH</button>
+      <button class="go" id="start">PLAY EXHIBITION</button>
+      <button class="go alt" id="watchBtn">WATCH AI EXHIBITION</button><button class="go alt" id="onlineBtn">HUMAN EXHIBITION</button>
     </div>
     <button class="go alt" id="practiceBtn">PRACTICE · LEARN THE CONTROLS</button>
     <div class="online" id="onlinePanel" hidden>
       <div class="line"><button class="opt" id="create">Create match</button><span class="code" id="roomCode"></span></div>
-      <div class="line"><input id="joinCode" maxlength="6" placeholder="CODE" aria-label="Room code" autocomplete="off"><button class="opt" id="join">Join match</button></div>
-      <div class="status" id="netStatus" role="status">Create a match and send your opponent the code, or enter theirs. Your team and clock come from the choices above; the joiner plays the other side.</div>
+      <div class="line"><input id="joinCode" maxlength="8" placeholder="CODE" aria-label="Room code" autocomplete="off"><button class="opt" id="join">Join match</button></div>
+      <div class="status" id="netStatus" role="status">Create a private exhibition and share its eight-character code. The host chooses clubs and clock; the joiner plays the other side. No season result, rating, credit award or betting market is created.</div>
     </div>
     <div class="legend">
       <div><b>WASD / Arrows</b> move</div><div><b>Shift</b> sprint</div>

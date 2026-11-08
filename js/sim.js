@@ -30,7 +30,7 @@ const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const tf=(team,x)=>team===0?x:L-x;
 const atkX=team=>team===0?L:0, ownX=team=>team===0?0:L, dirX=team=>team===0?1:-1;
-function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function rng(seed){let a=seed>>>0;const next=()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};Object.defineProperty(next,"state",{get:()=>a>>>0});return next;}
 function gauss(S){const u=S.rnd()||1e-9,v=S.rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(6.283185*v);}
 function segDist(p,a,b){const vx=b.x-a.x,vy=b.y-a.y,l2=vx*vx+vy*vy||1;const t=clamp(((p.x-a.x)*vx+(p.y-a.y)*vy)/l2,0,1);return Math.hypot(a.x+vx*t-p.x,a.y+vy*t-p.y);}
 const onPitch=p=>p.alive&&p.bench<=0;
@@ -40,8 +40,9 @@ function nearest(S,team,x,y,noGK,exclude){let best=null,bd=1e9;
  if(!best&&noGK)return nearest(S,team,x,y,false,exclude);return best;}
 function ev(S,name,arg){S.ev.push([name,arg]);}
 
+function matchTeams(S){return S?.teams||TEAMS;}
 function newMatch(opts){
- const S={opts,t:0,clock:opts.minutes*60,score:[0,0],players:[],phase:'play',freeze:0,pending:null,msg:null,
+ const S={opts,teams:(opts.teams||TEAMS).map(team=>({...team})),t:0,clock:opts.minutes*60,score:[0,0],players:[],phase:'play',freeze:0,pending:null,msg:null,
   challenge:null,targets:[-1,-1],targetOwners:[-1,-1],effects:[],scorches:[],over:false,result:null,stats:{goals:[0,0],dets:[0,0],beheads:[0,0],fouls:[0,0],saves:[0,0]},
   rnd:rng(opts.seed||1),shake:0,cut:null,ev:[],humans:[-1,-1],lastPoss:[-1,-1],ctl:[{a:0,b:0,s:0,w:0},{a:0,b:0,s:0,w:0}]};
  const hm=opts.humans||[false,false];
@@ -54,7 +55,7 @@ function newMatch(opts){
    skin:SKINS[Math.floor(S.rnd()*SKINS.length)],ai:{think:0,wait:0,seen:0,hold:0}});});
  const first=S.rnd()<0.5?0:1;
  doRestart(S,first,RESTART_TIMER);
- S.msg={text:'KICKOFF',sub:`${TEAMS[first].short} BALL · ${RESTART_TIMER}-SECOND OPENING THROW`,t:2.2};
+ S.msg={text:'KICKOFF',sub:`${matchTeams(S)[first].short} BALL · ${RESTART_TIMER}-SECOND OPENING THROW`,t:2.2};
  setFreeze(S,2.2,null);
  for(const t of [0,1])if(hm[t])S.humans[t]=S.players.find(p=>p.team===t&&p.num===9).id;
  ev(S,'whistle');
@@ -67,7 +68,7 @@ function doRestart(S,team,timer){
  if(!c)c=nearest(S,team,tf(team,24),CY,true);
  c.x=tf(team,24);c.y=CY;
  giveBall(S,c,timer,1.5);
- S.msg={text:`${TEAMS[team].short} BALL`,sub:`RESTART · ${timer}-SECOND THROW-IN`,t:1.6};
+ S.msg={text:`${matchTeams(S)[team].short} BALL`,sub:`RESTART · ${timer}-SECOND THROW-IN`,t:1.6};
  setFreeze(S,1.2,null);
 }
 function setFreeze(S,t,pending){S.phase='freeze';S.freeze=t;S.pending=pending;}
@@ -114,7 +115,7 @@ function stepChallenge(S,intents){
  const winner=S.players[ch.ids[team]],loser=S.players[ch.ids[1-team]];
  winner.action=null;winner.stun=0;loser.action=null;loser.stun=1.2;winner.guard=loser.guard=false;
  giveBall(S,winner,RESTART_TIMER,0.7);S.phase='play';S.challenge=null;
- S.msg={text:`${TEAMS[team].short} WIN THE FIGHT`,sub:'PLAY ON · 30-SECOND BALL',t:1.8};
+ S.msg={text:`${matchTeams(S)[team].short} WIN THE FIGHT`,sub:'PLAY ON · 30-SECOND BALL',t:1.8};
 }
 function endMatch(S,reason,loser){
  S.over=true;S.phase='over';
@@ -215,11 +216,11 @@ function kill(S,p,cause,by){
  b.state='dead';b.holder=-1;
  if(cause==='det'){S.stats.dets[team]++;S.effects.push({type:'boom',x:p.x,y:p.y,t:0,dur:1.5,seed:Math.floor(S.rnd()*1e6)});S.scorches.push({x:p.x,y:p.y,r:0.9+S.rnd()*0.5});S.shake=1;ev(S,'boom');}
  else{S.stats.beheads[team]++;S.effects.push({type:'slash',x:p.x,y:p.y,t:0,dur:0.8,dir:by.x<p.x?1:-1});S.shake=0.5;ev(S,'slash');}
- S.cut={t:0,dur:3.0,delay:0.9,text:`${TEAMS[team].short} DOWN TO ${n}`,sub:cause==='det'?`#${p.num} · THE TIMER REACHED ZERO IN HIS HANDS`:`#${p.num} · STOPPED BY THE GOALKEEPER`};
+ S.cut={t:0,dur:3.0,delay:0.9,text:`${matchTeams(S)[team].short} DOWN TO ${n}`,sub:cause==='det'?`#${p.num} · THE TIMER REACHED ZERO IN HIS HANDS`:`#${p.num} · STOPPED BY THE GOALKEEPER`};
  S.msg={text:cause==='det'?'DETONATION':'STOPPED AT THE NET',sub:'',t:0.9};
  if(n<MIN_PLAYERS){setFreeze(S,3.0,{type:'end',reason:'forfeit',loser:team});S.cut.sub+=` · BELOW ${MIN_PLAYERS} · FORFEIT`;return;}
  const recv=cause==='behead'?by:nearest(S,opp,p.x,p.y,true);
- S.cut.sub+=` · NEW BALL TO ${TEAMS[recv.team].short} #${recv.num} · ${CATCH_TIMER}s`;
+ S.cut.sub+=` · NEW BALL TO ${matchTeams(S)[recv.team].short} #${recv.num} · ${CATCH_TIMER}s`;
  setFreeze(S,3.0,{type:'give',id:recv.id,timer:CATCH_TIMER});
 }
 function foul(S,off,vic){
@@ -229,7 +230,7 @@ function foul(S,off,vic){
  let recv=(b.state==='held'&&S.players[b.holder].team===team)?S.players[b.holder]:nearest(S,team,vic.x,vic.y,true,vic.id)||vic;
  b.state='dead';
  setFreeze(S,1.6,{type:'give',id:recv.id,timer:CATCH_TIMER});
- S.msg={text:'FOUL',sub:`#${off.num} ${TEAMS[off.team].short} · CONTACT WITHOUT THE BALL · OFF ${SINBIN}s`,t:2.4};
+ S.msg={text:'FOUL',sub:`#${off.num} ${matchTeams(S)[off.team].short} · CONTACT WITHOUT THE BALL · OFF ${SINBIN}s`,t:2.4};
 }
 function throwBall(S,p,tx,ty,tz,T,kind,receiver){
  const b=S.ball;b.state='air';b.holder=-1;b.x=p.x;b.y=p.y;b.z=1.5;
@@ -294,13 +295,13 @@ function tryCatch(S){
   if(p.team===b.lastTeam)ch=p.id===b.receiver?0.97:0.85;
   else if(gk&&b.kind==='shot'){const sp=Math.hypot(b.vx,b.vy);ch=clamp(1.02-sp*0.021-(dh/reach)*0.4,0.06,0.88)*tp.gkSkill;}
   else ch=tp.intercept*(1-dh/reach*0.5);
-  if(S.rnd()<ch){const wasShot=b.kind==='shot'&&gk&&p.team!==b.lastTeam;catchBall(S,p);if(wasShot){S.stats.saves[p.team]++;S.msg={text:'SAVE',sub:`#${p.num} ${TEAMS[p.team].short}`,t:1.1};ev(S,'save');}return;}
+  if(S.rnd()<ch){const wasShot=b.kind==='shot'&&gk&&p.team!==b.lastTeam;catchBall(S,p);if(wasShot){S.stats.saves[p.team]++;S.msg={text:'SAVE',sub:`#${p.num} ${matchTeams(S)[p.team].short}`,t:1.1};ev(S,'save');}return;}
  }
 }
 function catchBall(S,p){const b=S.ball;giveBall(S,p,p.id===b.lastHolder?b.timer:CATCH_TIMER,0);}
 function scoreGoal(S,team){
  S.score[team]++;S.stats.goals[team]++;S.ball.state='dead';ev(S,'goal');
- S.msg={text:'GOAL',sub:TEAMS[team].name.toUpperCase(),t:2.7,big:true};
+ S.msg={text:'GOAL',sub:matchTeams(S)[team].name.toUpperCase(),t:2.7,big:true};
  setFreeze(S,2.7,{type:'challenge'});
 }
 function outOfBounds(S){
@@ -311,7 +312,7 @@ function outOfBounds(S){
  if(!recv){recv=nearest(S,team,sx,sy,true);recv.x=sx;recv.y=sy;}
  recv.vx=recv.vy=0;b.state='dead';
  setFreeze(S,1.0,{type:'give',id:recv.id,timer:CATCH_TIMER});
- S.msg={text:'OUT OF PLAY',sub:`${TEAMS[team].short} BALL`,t:1.4};
+ S.msg={text:'OUT OF PLAY',sub:`${matchTeams(S)[team].short} BALL`,t:1.4};
 }
 function separate(S){
  const ps=S.players;
@@ -409,7 +410,7 @@ function aiCarrier(S,p,ctx,it){
    it.act='throw';it.dx=dir;it.dy=(CY-p.y)*0.02;return it;
   }
   if(!p.ai.greedy&&best&&pres<2.2&&best.score>0&&(t<9||S.rnd()<0.25)){it.act='pass';it.to=best.q.id;return it;}
-  if(!p.ai.greedy&&best&&t<TEAMS[p.team].style&&best.score>0.3){it.act='pass';it.to=best.q.id;return it;}
+  if(!p.ai.greedy&&best&&t<matchTeams(S)[p.team].style&&best.score>0.3){it.act='pass';it.to=best.q.id;return it;}
   if(!p.ai.greedy&&best&&best.fwd>12&&best.score>0.9&&S.rnd()<0.3){it.act='pass';it.to=best.q.id;return it;}
  }
  // dribble toward goal, bending away from defenders ahead
@@ -525,7 +526,7 @@ function tick(S,inputs,filterIntents){autoSwitch(S);const intents=computeIntents
    ===================================================================== */
 const ACT=['','tackle','chain','behead','release'],BST=['dead','held','air','loose'];
 const r2=v=>Math.round(v*100)/100;
-function staticInfo(S){return{opts:S.opts,players:S.players.map(p=>[p.team,p.slot,p.role,p.num,p.skin,p.hasChain?1:0])};}
+function staticInfo(S){return{opts:S.opts,teams:matchTeams(S).map(team=>({...team})),players:S.players.map(p=>[p.team,p.slot,p.role,p.num,p.skin,p.hasChain?1:0])};}
 function snapshot(S,events){
  const P=[];
  for(const p of S.players){const a=p.action;P.push(r2(p.x),r2(p.y),r2(p.vx),r2(p.vy),r2(p.face),(p.alive?1:0)|(p.bench>0?2:0)|(p.stun>0?4:0)|(p.guard?8:0),a?ACT.indexOf(a.type):0,a?r2(a.t):0,a?r2(a.dur):0);}
@@ -539,7 +540,7 @@ function snapshot(S,events){
   st:S.stats,ov:S.over,res:S.result,ev:events||[]};
 }
 function makeView(info){
- return{opts:info.opts,t:0,phase:'play',clock:0,score:[0,0],humans:[-1,-1],shake:0,msg:null,cut:null,effects:[],scorches:[],stats:null,over:false,result:null,
+ return{opts:info.opts,teams:(info.teams||TEAMS).map(team=>({...team})),t:0,phase:'play',clock:0,score:[0,0],humans:[-1,-1],shake:0,msg:null,cut:null,effects:[],scorches:[],stats:null,over:false,result:null,
   players:info.players.map((q,id)=>({id,team:q[0],slot:q[1],role:q[2],num:q[3],skin:q[4],hasChain:!!q[5],x:0,y:0,vx:0,vy:0,face:0,alive:true,bench:0,stun:0,action:null,run:id*0.7})),
   ball:{state:'dead',holder:-1,x:CX,y:CY,z:0,timer:0}};
 }
@@ -576,5 +577,5 @@ function payout(S,team){
  return{total,mult,key,lines};
 }
 
-export{L,W,CX,CY,DT,GOAL_HW,GOAL_ZLO,GOAL_ZHI,BOX_R,MIN_PLAYERS,TEAMS,rng,clamp,onPitch,aliveCount,dirX,
+export{L,W,CX,CY,DT,GOAL_HW,GOAL_ZLO,GOAL_ZHI,BOX_R,MIN_PLAYERS,TEAMS,matchTeams,rng,clamp,onPitch,aliveCount,dirX,
  giveBall,startChallenge,selectedPassTarget,newMatch,tick,snapshot,staticInfo,makeView,applySnapshot,payout,NOINPUT};
