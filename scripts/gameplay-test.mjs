@@ -42,10 +42,10 @@ for(const team of [0,1]){
  s.players[ids[0]].x=51.9;s.players[ids[1]].x=53.1;
  s.players[ids[team]].hasChain=true;
  for(let i=0;i<200&&s.challenge;i++){const inputs=[idle(),idle()];inputs[team].b=1+Math.floor(i/80);tick(s,inputs);}
- assert.equal(s.phase,'play');assert.equal(s.ball.holder,ids[team]);assert.equal(s.ball.timer,30);
+ assert.equal(s.phase,'play');assert.equal(s.ball.holder,ids[team]);assert.equal(s.ball.timer,12);
  assert.deepEqual(s.stats.fouls,[0,0]);assert(s.players.every(p=>p.alive));
  for(const [id,x,y] of fixed)assert.deepEqual([s.players[id].x,s.players[id].y],[x,y]);
- tick(s,[idle(),idle()]);assert(s.clock<clock);assert(s.ball.timer<30);
+ tick(s,[idle(),idle()]);assert(s.clock<clock);assert(s.ball.timer<12);
 }
 {
  const s=match([false,false]);challenge(s);for(let i=0;i<1200&&s.challenge;i++)tick(s,null);

@@ -3,7 +3,7 @@
    local  : you vs the AI, simulated in this tab
    online : the MatchRoom Durable Object simulates; this tab sends inputs and draws snapshots
    v2 */
-import{DT,TEAMS,matchTeams,MIN_PLAYERS,newMatch,tick,payout,aliveCount,onPitch,clamp,selectedPassTarget}from'./sim.js';
+import{DT,RESTART_TIMER,CATCH_TIMER,TEAMS,matchTeams,MIN_PLAYERS,newMatch,tick,payout,aliveCount,onPitch,clamp,selectedPassTarget}from'./sim.js';
 import{CLUBS,clubPair}from'./exhibition-clubs.js';
 import{render,timerColor}from'./render.js';
 import{AU}from'./audio.js';
@@ -162,7 +162,7 @@ function showEnd(V){
 /* ---------- HUD ---------- */
 let lastMsgKey='';
 function updateHUD(V){
- if(mode==='menu'||!V)return;
+ if(mode==='menu'||!V){document.getElementById('fuseWarning').hidden=true;return;}
  if(mode==='watch'){for(const id of ['keys','actionHelp','touchControls'])$(id).hidden=true;}
  for(const t of [0,1]){$('ab'+t).textContent=teams()[t].abbr;$('sc'+t).textContent=V.score[t];$('ct'+t).textContent=V.players.filter(p=>p.team===t&&onPitch(p)).length+' ON';}
  const c=Math.ceil(V.clock);$('clk').textContent=mode==='practice'?`${practice.index+1} / ${DRILLS.length}`:`${String(Math.floor(c/60)).padStart(2,'0')}:${String(c%60).padStart(2,'0')}`;
@@ -173,6 +173,10 @@ function updateHUD(V){
  $('banner').classList.toggle('challenge',!!V.challenge);
  const player=V.players[V.humans[myTeam]],controls=input.read();
  const b=V.ball,mine=b.state==='held'&&b.holder===V.humans[myTeam];
+ const urgent=b.state==='held'&&b.timer>0&&b.timer<=3&&V.phase==='play'&&mode!=='menu'&&!V.over;
+ $('fuseWarning').hidden=!urgent;
+ if(urgent){const warning=(mine?'PASS OR EXPLODE':'CARRIER ABOUT TO EXPLODE')+' · '+Math.ceil(b.timer)+'s';if($('fuseWarning').textContent!==warning)$('fuseWarning').textContent=warning;}
+ $('hold').classList.toggle('fuse-urgent',urgent&&mine);
  const target=mine&&player?selectedPassTarget(V,player,controls.mx,controls.my):null;
  const attack=player?.role==='GK'?'GOALKEEPER':player?.hasChain?'CHAIN':'KNUCKLES';
  $('touchPass').textContent=mine?'PASS': 'KNUCKLES';
@@ -186,7 +190,7 @@ function updateHUD(V){
   `PASS: ${target?'#'+target.num:'forward throw'} · E / LB / TARGET cycles receiver · Hold K / B / SHOOT, steer up/down, release`:
   `${attack} · J / A: knuckles (1.45m) · K / B: ${player?.hasChain?'chain (2.8m)':'knuckles (1.45m)'} · Contact only the carrier · Loose ball: automatic pickup`;
  $('hold').style.display=mine?'flex':'none';
- if(mine){$('hn').textContent=b.timer.toFixed(1);$('hn').style.color=timerColor(b.timer);$('hb').style.width=Math.min(100,b.timer/(b.timer>15?30:15)*100)+'%';$('hb').style.background=timerColor(b.timer);$('pb').style.width=input.charge()*100+'%';}
+ if(mine){$('hn').textContent=b.timer.toFixed(1);$('hn').style.color=timerColor(b.timer);$('hb').style.width=Math.min(100,b.timer/(b.timer>CATCH_TIMER?RESTART_TIMER:CATCH_TIMER)*100)+'%';$('hb').style.background=timerColor(b.timer);$('pb').style.width=input.charge()*100+'%';}
 }
 
 /* ---------- loop ---------- */

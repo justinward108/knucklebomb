@@ -11,7 +11,7 @@
 const L=105, W=68, CX=L/2, CY=W/2, G=9.8, DT=1/60;
 const GOAL_HW=2.6, GOAL_ZLO=0.9, GOAL_ZHI=6.1, BOX_R=9;
 function goalContains(y,z){return ((y-CY)/GOAL_HW)**2+((z-(GOAL_ZLO+GOAL_ZHI)/2)/((GOAL_ZHI-GOAL_ZLO)/2))**2<=1;}
-const RESTART_TIMER=30, CATCH_TIMER=15, MIN_PLAYERS=7, SINBIN=20;
+const RESTART_TIMER=12, CATCH_TIMER=8, MIN_PLAYERS=7, SINBIN=20;
 
 const TEAMS=[
  {name:'Houston Deacons',short:'DEACONS',abbr:'HOU',kit:'#f3efe2',kit2:'#d6a422',shorts:'#d6a422',num:'#6e520b',gk:'#2f8a6c',gk2:'#123d31',coach:'#5a636f',style:7.5},
@@ -265,7 +265,8 @@ function updateBall(S){
   b.x=p.x+Math.cos(p.face)*0.4;b.y=p.y+Math.sin(p.face)*0.4;b.z=1.15;
   if(b.protect>0)b.protect-=DT;
   const before=b.timer;b.timer-=DT;
-  if(b.timer<=5&&b.timer>0&&Math.ceil(b.timer)!==Math.ceil(before))ev(S,'beep',Math.ceil(b.timer));
+  const beat=b.timer<=3?4:1;
+  if(b.timer<=5&&b.timer>0&&Math.ceil(b.timer*beat)!==Math.ceil(before*beat))ev(S,'beep',Math.ceil(b.timer));
   if(b.timer<=0){b.timer=0;kill(S,p,'det');}
   return;
  }
@@ -578,5 +579,5 @@ function payout(S,team){
  return{total,mult,key,lines};
 }
 
-export{L,W,CX,CY,DT,goalContains,GOAL_HW,GOAL_ZLO,GOAL_ZHI,BOX_R,MIN_PLAYERS,TEAMS,matchTeams,rng,clamp,onPitch,aliveCount,dirX,
+export{L,W,CX,CY,DT,RESTART_TIMER,CATCH_TIMER,goalContains,GOAL_HW,GOAL_ZLO,GOAL_ZHI,BOX_R,MIN_PLAYERS,TEAMS,matchTeams,rng,clamp,onPitch,aliveCount,dirX,
  giveBall,startChallenge,selectedPassTarget,newMatch,tick,snapshot,staticInfo,makeView,applySnapshot,payout,NOINPUT};
