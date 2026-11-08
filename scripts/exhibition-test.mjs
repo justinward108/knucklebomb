@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {CLUBS,clubPair} from '../js/exhibition-clubs.js';
-import {newMatch,tick,staticInfo,makeView,applySnapshot,snapshot,matchTeams,TEAMS} from '../js/sim.js';
+import {newMatch,tick,staticInfo,makeView,applySnapshot,snapshot,matchTeams,TEAMS,goalContains,CY,GOAL_HW,GOAL_ZLO,GOAL_ZHI} from '../js/sim.js';
+const goalCentre=(GOAL_ZLO+GOAL_ZHI)/2;
+assert(Math.abs(GOAL_ZHI-GOAL_ZLO-GOAL_HW*2)<1e-9,'Goal aperture is circular');
+assert(goalContains(CY,goalCentre));
+assert(goalContains(CY+GOAL_HW*0.6,goalCentre+GOAL_HW*0.6));
+assert(!goalContains(CY+GOAL_HW*0.9,goalCentre+GOAL_HW*0.9),'Former rectangular corner cannot score');
+assert(!goalContains(CY,GOAL_ZLO-0.01));
+assert(!goalContains(CY,GOAL_ZHI+0.01));
 assert.equal(CLUBS.length,54);assert.equal(new Set(CLUBS.map(c=>c.id)).size,54);
 assert.throws(()=>clubPair('houston','houston'),/different/);assert.throws(()=>clubPair('missing','columbus'),/different/);
 const original=JSON.stringify(TEAMS);

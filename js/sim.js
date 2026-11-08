@@ -9,7 +9,8 @@
    part that later runs on the online server unchanged.
    ===================================================================== */
 const L=105, W=68, CX=L/2, CY=W/2, G=9.8, DT=1/60;
-const GOAL_HW=2.6, GOAL_ZLO=0.9, GOAL_ZHI=3.1, BOX_R=9;
+const GOAL_HW=2.6, GOAL_ZLO=0.9, GOAL_ZHI=6.1, BOX_R=9;
+function goalContains(y,z){return ((y-CY)/GOAL_HW)**2+((z-(GOAL_ZLO+GOAL_ZHI)/2)/((GOAL_ZHI-GOAL_ZLO)/2))**2<=1;}
 const RESTART_TIMER=30, CATCH_TIMER=15, MIN_PLAYERS=7, SINBIN=20;
 
 const TEAMS=[
@@ -252,7 +253,7 @@ function doShot(S,p,aim,power){
  const gx=atkX(p.team),d=Math.hypot(gx-p.x,CY-p.y),acc=S.tp[p.team].acc;
  let pres=99;for(const o of S.players)if(o.team!==p.team&&onPitch(o))pres=Math.min(pres,dist(o,p));
  const sd=(0.25+d*0.028)*acc*(pres<2.5?1.6:1)*(0.85+power*0.45);
- const ty=CY+clamp(aim,-1,1)*(GOAL_HW-0.5)+gauss(S)*sd, tz=2.0+gauss(S)*sd*0.45;
+ const ty=CY+clamp(aim,-1,1)*(GOAL_HW-0.5)+gauss(S)*sd, tz=(GOAL_ZLO+GOAL_ZHI)/2+gauss(S)*sd*0.45;
  const speed=20+power*10;
  throwBall(S,p,gx,ty,tz,Math.max(0.22,d/speed),'shot',-1);
 }
@@ -276,7 +277,7 @@ function updateBall(S){
  }else{const f=Math.max(0,1-2.2*DT);b.vx*=f;b.vy*=f;}
  for(const gx of [0,L]){
   if((px-gx)*(b.x-gx)<0){const fr=(gx-px)/(b.x-px),y=py+(b.y-py)*fr,z=pz+(b.z-pz)*fr;
-   if(Math.abs(y-CY)<=GOAL_HW&&z>=GOAL_ZLO&&z<=GOAL_ZHI){scoreGoal(S,gx===L?0:1);return;}}
+   if(goalContains(y,z)){scoreGoal(S,gx===L?0:1);return;}}
  }
  if(b.x<-0.5||b.x>L+0.5||b.y<-0.5||b.y>W+0.5){outOfBounds(S);return;}
  tryCatch(S);
@@ -577,5 +578,5 @@ function payout(S,team){
  return{total,mult,key,lines};
 }
 
-export{L,W,CX,CY,DT,GOAL_HW,GOAL_ZLO,GOAL_ZHI,BOX_R,MIN_PLAYERS,TEAMS,matchTeams,rng,clamp,onPitch,aliveCount,dirX,
+export{L,W,CX,CY,DT,goalContains,GOAL_HW,GOAL_ZLO,GOAL_ZHI,BOX_R,MIN_PLAYERS,TEAMS,matchTeams,rng,clamp,onPitch,aliveCount,dirX,
  giveBall,startChallenge,selectedPassTarget,newMatch,tick,snapshot,staticInfo,makeView,applySnapshot,payout,NOINPUT};

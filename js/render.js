@@ -50,29 +50,30 @@ function drawWorld(S){
  // floodlights
  for(const fl of [[-16,W+26,30],[L+16,W+26,30]]){const r=P(fl[0],fl[1],fl[2]);if(!r)continue;const rad=r.s*14;const gr=g.createRadialGradient(r.x,r.y,0,r.x,r.y,rad);gr.addColorStop(0,'rgba(255,250,230,.85)');gr.addColorStop(0.15,'rgba(255,240,200,.25)');gr.addColorStop(1,'rgba(255,240,200,0)');g.fillStyle=gr;g.fillRect(r.x-rad,r.y-rad,rad*2,rad*2);
   g.fillStyle='#f8f3de';g.fillRect(r.x-r.s*2,r.y-r.s*0.6,r.s*4,r.s*1.2);}
- // Broadcast-arena interpretation: worn dark turf, concrete service apron.
- // Retain the script's broad field and the simulation's exact playable bounds.
- g.fillStyle='#252b2c';poly([[-6,-7],[L+6,-7],[L+6,W+5],[-6,W+5]]);g.fill();
- g.fillStyle='#354c42';poly([[0,0],[L,0],[L,W],[0,W]]);g.fill();
- // Fixed surface grain and scuffs, without soccer mowing bands or frame noise.
+ // Owner-directed reference: pale concrete/stone paving, not grass.
+ g.fillStyle='#77796e';poly([[-6,-7],[L+6,-7],[L+6,W+5],[-6,W+5]]);g.fill();
  const surface=rng(1927);
- for(let i=0;i<440;i++){const x=surface()*L,y=surface()*W,r=surface()*0.45+0.08;
-  g.fillStyle=i%3?'rgba(15,26,22,.11)':'rgba(181,174,140,.09)';poly([[x,y],[x+r*2,y+0.1],[x+r,y+r],[x-r,y+r*0.4]]);g.fill();}
- // Recessed, warm end courts make the raised scoring mouths easy to read.
- for(const side of [0,L]){const d=side===0?1:-1;
-  g.fillStyle='rgba(176,133,68,.14)';poly([[side,CY-BOX_R],[side+d*6,CY-BOX_R],[side+d*9,CY],[side+d*6,CY+BOX_R],[side,CY+BOX_R]]);g.fill();}
- // Segmented service deck and hazard edge are dressing, outside play.
- for(let x=0;x<L;x+=3){g.fillStyle='#bd9e53';poly([[x,-1.3],[x+1,-1.3],[x+1.8,-0.45],[x+0.8,-0.45]]);g.fill();
-  poly([[x,W+0.45],[x+1,W+0.45],[x+1.8,W+1.3],[x+0.8,W+1.3]]);g.fill();}
- g.strokeStyle='rgba(153,163,156,.18)';g.lineWidth=1;
- for(let x=-4;x<L+6;x+=8){line3([[x,-7],[x,-1.5]]);line3([[x,W+1.4],[x,W+5]]);}
+ for(let x=0;x<L;x+=5)for(let y=0;y<W;y+=4){const tone=Math.floor(140+surface()*18);
+  g.fillStyle=`rgb(${tone+14},${tone+10},${tone-3})`;poly([[x,y],[Math.min(L,x+5),y],[Math.min(L,x+5),Math.min(W,y+4)],[x,Math.min(W,y+4)]]);g.fill();}
+ g.strokeStyle='rgba(53,49,39,.25)';g.lineWidth=0.75;
+ for(let x=5;x<L;x+=5)line3([[x,0],[x,W]]);
+ for(let y=4;y<W;y+=4)line3([[0,y],[L,y]]);
+ for(let i=0;i<250;i++){const x=surface()*L,y=surface()*W,r=surface()*0.4+0.08;
+  g.fillStyle=i%3?'rgba(51,43,31,.08)':'rgba(239,226,193,.13)';poly([[x,y],[x+r*2,y+0.1],[x+r,y+r],[x-r,y+r*0.4]]);g.fill();}
+ // Masonry end walls sit beyond the playable bounds; no new collision rules.
+ for(const gx of [0,L]){const d=gx===0?-1:1,wx=gx+d*1.5;
+  g.fillStyle='#8d897b';poly([[wx,0],[wx,W],[wx,W,8],[wx,0,8]]);g.fill();
+  g.strokeStyle='rgba(53,48,39,.4)';g.lineWidth=1;
+  for(let z=0;z<=8;z+=1){line3([[wx,0,z],[wx,W,z]]);
+   for(let y=(z%2)*2;y<W;y+=4)line3([[wx,y,z],[wx,y,z+1]]);}
+  g.strokeStyle='#b7ad91';g.lineWidth=4;line3([[wx,0,8],[wx,W,8]]);}
  // floodlit centre wash
  const c0=P(CX,CY,0);if(c0){const rr=c0.s*60;const gr=g.createRadialGradient(c0.x,c0.y,0,c0.x,c0.y,rr);gr.addColorStop(0,'rgba(255,255,230,.10)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(c0.x-rr,c0.y-rr,rr*2,rr*2);}
  // ad boards on the far touchline
  for(let i=0;i<ADS.length;i++){const x0=-4+i*12.6,x1=x0+12;g.fillStyle=i%2?'#0e1a2e':'#2a0f12';poly([[x0,W+1.8,0],[x1,W+1.8,0],[x1,W+1.8,1.0],[x0,W+1.8,1.0]]);g.fill();
   const m=P((x0+x1)/2,W+1.8,0.5);if(m&&m.s>4){g.fillStyle=ADS[i]==='NIRVANA'?'#7fd3ff':ADS[i]==='KNUCKLEBOMB'?'#ffcc33':'#ff7a6b';g.font=`800 ${Math.max(7,m.s*0.62)}px 'Big Shoulders Display',Impact,sans-serif`;g.textAlign='center';g.textBaseline='middle';g.fillText(ADS[i],m.x,m.y);}}
  // lines
- g.strokeStyle='rgba(236,225,190,.78)';g.lineWidth=2;
+ g.strokeStyle='rgba(236,225,190,.42)';g.lineWidth=2;
  line3([[0,0],[L,0],[L,W],[0,W],[0,0]]);line3([[CX,0],[CX,W]]);
  const circ=(cx,cy,r,a0,a1)=>{const pts=[];for(let i=0;i<=40;i++){const a=a0+(a1-a0)*i/40;pts.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]);}line3(pts);};
  circ(CX,CY,9.15,0,Math.PI*2);circ(0,CY,BOX_R,-Math.PI/2,Math.PI/2);circ(L,CY,BOX_R,Math.PI/2,Math.PI*1.5);
@@ -81,28 +82,27 @@ function drawWorld(S){
  for(const s of S.scorches){const r=P(s.x,s.y,0);if(!r)continue;g.fillStyle='rgba(12,10,8,.55)';g.beginPath();g.ellipse(r.x,r.y,r.s*s.r*1.6,r.s*s.r*0.75,0,0,Math.PI*2);g.fill();}
 }
 function drawGoal(gx){
- // Raised handball-like target, not a ground-level soccer net. The lit mouth
- // exactly follows GOAL_ZLO/GOAL_ZHI; the lower void cannot score.
- const d=gx===0?-1:1,back=gx+d*2.1,wide=GOAL_HW+0.48;
- g.fillStyle='#252a2b';poly([[gx-0.55,CY-wide-0.5],[back+d*0.5,CY-wide-0.5],[back+d*0.5,CY+wide+0.5],[gx-0.55,CY+wide+0.5]]);g.fill();
- // Deep catch cage, visible through the illuminated aperture.
- g.fillStyle='rgba(7,12,15,.75)';poly([[back,CY-GOAL_HW,GOAL_ZLO],[back,CY+GOAL_HW,GOAL_ZLO],[back,CY+GOAL_HW,GOAL_ZHI],[back,CY-GOAL_HW,GOAL_ZHI]]);g.fill();
- g.strokeStyle='rgba(152,168,168,.4)';g.lineWidth=1;
- for(let i=0;i<=8;i++){const y=CY-GOAL_HW+i*GOAL_HW*2/8;line3([[back,y,GOAL_ZLO],[back,y,GOAL_ZHI]]);}
- for(let i=0;i<=4;i++){const z=GOAL_ZLO+i*(GOAL_ZHI-GOAL_ZLO)/4;line3([[back,CY-GOAL_HW,z],[back,CY+GOAL_HW,z]]);}
- // Braced steel frame and substantial pedestals under the raised opening.
- g.strokeStyle='#151c20';g.lineWidth=10;
- for(const y of [CY-wide,CY+wide]){line3([[gx,y,0],[gx,y,GOAL_ZHI+0.5]]);line3([[back,y,0],[gx,y,GOAL_ZHI+0.45]]);}
- g.strokeStyle='#7e8b8b';g.lineWidth=2;
- for(const y of [CY-wide,CY+wide])line3([[gx,y,0.1],[gx,y,GOAL_ZHI+0.4]]);
- const mouth=[[gx,CY-GOAL_HW,GOAL_ZLO],[gx,CY-GOAL_HW,GOAL_ZHI],[gx,CY+GOAL_HW,GOAL_ZHI],[gx,CY+GOAL_HW,GOAL_ZLO],[gx,CY-GOAL_HW,GOAL_ZLO]];
- g.strokeStyle='#11191d';g.lineWidth=11;line3(mouth);
- g.strokeStyle='#d8a94c';g.lineWidth=5;line3(mouth);
- g.strokeStyle='#fff1ba';g.lineWidth=1.5;line3(mouth);
- g.strokeStyle='rgba(216,169,76,.45)';g.lineWidth=2;
- for(const y of [CY-GOAL_HW,CY+GOAL_HW])line3([[gx,y,GOAL_ZHI],[back,y,GOAL_ZHI],[back,y,GOAL_ZLO],[gx,y,GOAL_ZLO]]);
- const label=P(gx,CY,GOAL_ZHI+0.7);
- if(label){g.font=`900 ${Math.max(9,label.s*0.46)}px 'Big Shoulders Display',Impact,sans-serif`;g.textAlign='center';g.fillStyle='#f5df9d';g.fillText('RAISED GOAL',label.x,label.y);}
+ // Thick, circular masonry hoop from the owner-selected equipment/gameplay
+ // references. No rectangular frame, catch cage, net or illuminated trim.
+ const d=gx===0?-1:1,back=gx+d*0.65,zc=(GOAL_ZLO+GOAL_ZHI)/2,inner=GOAL_HW,outer=inner+0.68;
+ const ring=(x,r)=>Array.from({length:65},(_,i)=>{const a=i/64*Math.PI*2;return [x,CY+Math.cos(a)*r,zc+Math.sin(a)*r];});
+ const face=ring(gx,outer),hole=ring(gx,inner),rear=ring(back,outer);
+ g.fillStyle='#28271f';poly(ring(back,inner));g.fill();
+ // Side thickness and the dark inner tunnel are shaded segment by segment.
+ for(let i=0;i<64;i++){
+  const c=Math.floor(99+30*Math.sin(i/64*Math.PI*2));g.fillStyle=`rgb(${c+12},${c+8},${c-5})`;
+  poly([face[i],rear[i],rear[i+1],face[i+1]]);g.fill();
+  const a=i/64*Math.PI*2,b=(i+1)/64*Math.PI*2;
+  g.fillStyle='#625e50';poly([hole[i],[back,CY+Math.cos(a)*inner,zc+Math.sin(a)*inner],[back,CY+Math.cos(b)*inner,zc+Math.sin(b)*inner],hole[i+1]]);g.fill();
+ }
+ // Stone face consists of an annulus, leaving a real transparent opening.
+ for(let i=0;i<64;i++){const c=Math.floor(164+24*Math.sin(i/64*Math.PI*2));g.fillStyle=`rgb(${c+17},${c+10},${c-9})`;
+  poly([face[i],face[i+1],hole[i+1],hole[i]]);g.fill();}
+ g.strokeStyle='#c9bea0';g.lineWidth=1.5;line3(face);
+ g.strokeStyle='#706b59';g.lineWidth=1.5;line3(hole);
+ // Worn radial masonry joints; these are visual surface detail only.
+ g.strokeStyle='rgba(70,62,46,.48)';g.lineWidth=1;
+ for(let i=0;i<16;i++){const a=i/16*Math.PI*2;line3([[gx,CY+Math.cos(a)*inner,zc+Math.sin(a)*inner],[gx,CY+Math.cos(a)*outer,zc+Math.sin(a)*outer]]);}
 }
 export function timerColor(t){return t>10?'#ffd34d':t>5?'#ff9a2e':'#ff3b30';}
 function drawPlayer(S,p,isHuman){
