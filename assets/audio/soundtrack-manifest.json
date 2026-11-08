@@ -1,0 +1,71 @@
+{
+  "game": "knucklebomb",
+  "tracks": [
+    {
+      "game": "knucklebomb",
+      "slug": "01-floodlit-arena-walkout",
+      "role": "title",
+      "title": "Tonight Under the Floodlights (Arena Walkout)",
+      "bpm": 114,
+      "key": "E Phrygian",
+      "file": "01-floodlit-arena-walkout.mp3",
+      "size_bytes": 2922990,
+      "is_default": true
+    },
+    {
+      "game": "knucklebomb",
+      "slug": "02-eleven-a-side-live-ball",
+      "role": "match_play",
+      "title": "Eleven a Side, Live Bomb (First Half Action)",
+      "bpm": 120,
+      "key": "E Minor",
+      "file": "02-eleven-a-side-live-ball.mp3",
+      "size_bytes": 2921736,
+      "is_default": false
+    },
+    {
+      "game": "knucklebomb",
+      "slug": "03-defenders-carry-chains",
+      "role": "match_intense",
+      "title": "Defenders Carry Chains (Second Half Surge)",
+      "bpm": 126,
+      "key": "A Phrygian",
+      "file": "03-defenders-carry-chains.mp3",
+      "size_bytes": 2934902,
+      "is_default": false
+    },
+    {
+      "game": "knucklebomb",
+      "slug": "04-center-circle-knuckle-fight",
+      "role": "brawl",
+      "title": "Center-Circle Knuckle Fight (Possession Brawl)",
+      "bpm": 134,
+      "key": "E Phrygian",
+      "file": "04-center-circle-knuckle-fight.mp3",
+      "size_bytes": 2176933,
+      "is_default": false
+    },
+    {
+      "game": "knucklebomb",
+      "slug": "05-practice-pitch-drills",
+      "role": "practice",
+      "title": "Practice Pitch & Tactical Drills",
+      "bpm": 106,
+      "key": "E Dorian",
+      "file": "05-practice-pitch-drills.mp3",
+      "size_bytes": 2934902,
+      "is_default": false
+    },
+    {
+      "game": "knucklebomb",
+      "slug": "06-full-time-rapture-payout",
+      "role": "finale",
+      "title": "Full Time & Post-Match Payout",
+      "bpm": 110,
+      "key": "E Minor to E Major",
+      "file": "06-full-time-rapture-payout.mp3",
+      "size_bytes": 2227088,
+      "is_default": false
+    }
+  ]
+}

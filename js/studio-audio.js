@@ -31,6 +31,14 @@
       filterCutoff: 950,
       hatLevel: 0.035,
       kickPattern: [1, 0, 0, 0, 1, 0, 1, 0],
+      tracks: [
+        { slug: "01-anthem-of-the-index", title: "Anthem of the Index", role: "title" },
+        { slug: "02-civic-deck-workshop", title: "Civic Registry & Deck Workshop", role: "workshop" },
+        { slug: "03-coalition-of-order", title: "Coalition of Order", role: "order_battle" },
+        { slug: "04-ministry-of-provision", title: "Ministry of Provision", role: "provision_battle" },
+        { slug: "05-faith-in-the-balance", title: "Faith in the Balance", role: "climax" },
+        { slug: "06-verified-victory-decree", title: "Verified Victory Decree", role: "finale" },
+      ],
     },
     dosa: {
       title: "Case Analyst Desk (Keywise C Dorian)",
@@ -50,6 +58,14 @@
       filterCutoff: 680,
       hatLevel: 0.02,
       kickPattern: [1, 0, 0, 0, 0, 0, 1, 0],
+      tracks: [
+        { slug: "01-case-analyst-desk", title: "Case Analyst Desk", role: "title" },
+        { slug: "02-quench-utilities-dossier", title: "Quench Utilities & The Meter Reader", role: "case1" },
+        { slug: "03-magnetic-tape-contradiction", title: "Magnetic Tape & Contradiction", role: "wiretap" },
+        { slug: "04-pump-station-seven", title: "Pump Station Seven", role: "case2" },
+        { slug: "05-the-line-is-listening", title: "The Line Is Listening", role: "climax" },
+        { slug: "06-stamped-and-filed", title: "Stamped and Filed", role: "finale" },
+      ],
     },
     "paradise-lost": {
       title: "Hilo Rain & New Timber (Keywise G Major)",
@@ -69,6 +85,14 @@
       filterCutoff: 1350,
       hatLevel: 0.015,
       kickPattern: [1, 0, 0, 1, 0, 0, 1, 0],
+      tracks: [
+        { slug: "01-hilo-rain-and-new-timber", title: "Hilo Rain & New Timber", role: "title" },
+        { slug: "02-puna-morning-garden", title: "Puna Morning & Garden Clearing", role: "morning" },
+        { slug: "03-banyan-shade-town-errands", title: "Banyan Shade & Town Market", role: "town" },
+        { slug: "04-tradewind-afternoon-work", title: "Tradewind Afternoon", role: "work" },
+        { slug: "05-lanterns-on-the-lanai", title: "Lanterns on the Lanai", role: "evening" },
+        { slug: "06-ohana-harvest-table", title: "Harvest Table & Neighborly Gathering", role: "festival" },
+      ],
     },
     nirvanasales: {
       title: "Clearance Rush (Keywise F Mixolydian)",
@@ -88,6 +112,14 @@
       filterCutoff: 1600,
       hatLevel: 0.045,
       kickPattern: [1, 0, 1, 0, 1, 0, 1, 1],
+      tracks: [
+        { slug: "01-clearance-rush-main", title: "Clearance Rush (Aisle One)", role: "title" },
+        { slug: "02-blue-light-cart-dash", title: "Blue-Light Cart Dash", role: "play_mid" },
+        { slug: "03-elevator-to-housewares", title: "Escalator to Housewares", role: "lobby" },
+        { slug: "04-price-hike-overdrive", title: "Price Hike Overdrive!", role: "danger" },
+        { slug: "05-head-to-head-checkout", title: "Head-to-Head Checkout", role: "battle" },
+        { slug: "06-golden-receipt-jackpot", title: "Golden Receipt Jackpot", role: "finale" },
+      ],
     },
     knucklebomb: {
       title: "Arena Pit Brass & Dice (Keywise E Phrygian)",
@@ -107,6 +139,14 @@
       filterCutoff: 1150,
       hatLevel: 0.05,
       kickPattern: [1, 0, 0, 1, 1, 0, 1, 0],
+      tracks: [
+        { slug: "01-floodlit-arena-walkout", title: "Tonight Under the Floodlights", role: "title" },
+        { slug: "02-eleven-a-side-live-ball", title: "Eleven a Side, Live Bomb", role: "match_play" },
+        { slug: "03-defenders-carry-chains", title: "Defenders Carry Chains", role: "match_intense" },
+        { slug: "04-center-circle-knuckle-fight", title: "Center-Circle Knuckle Fight", role: "brawl" },
+        { slug: "05-practice-pitch-drills", title: "Practice Pitch & Tactical Drills", role: "practice" },
+        { slug: "06-full-time-rapture-payout", title: "Full Time & Post-Match Payout", role: "finale" },
+      ],
     },
     "ottoman-overlords": {
       title: "1914 Continental Telegraph (Keywise A Harmonic Minor)",
@@ -126,6 +166,14 @@
       filterCutoff: 880,
       hatLevel: 0.025,
       kickPattern: [1, 0, 0, 0, 1, 0, 0, 1],
+      tracks: [
+        { slug: "01-imperial-warroom-overture", title: "Imperial War Room Overture", role: "title" },
+        { slug: "02-sublime-porte-garrison", title: "Garrison of the Sublime Porte", role: "og_turn" },
+        { slug: "03-pine-and-broken-chain", title: "Pine and Broken Chain", role: "resistance_turn" },
+        { slug: "04-sealed-orders-shadow-network", title: "Sealed Orders & Shadow Network", role: "espionage" },
+        { slug: "05-severed-lines-continental-assault", title: "Severed Lines & Continental Assault", role: "combat" },
+        { slug: "06-kaiser-television-armistice", title: "Berlin Broadcast & Continental Armistice", role: "finale" },
+      ],
     },
   };
 
@@ -153,6 +201,8 @@
   var stepTimer = null;
   var stepIndex = 0;
   var externalAudio = null;
+  var externalActive = false;
+  var trackIndex = 0;
 
   function ensureContext() {
     if (!ctx) {
@@ -160,7 +210,7 @@
       if (!AC) return null;
       ctx = new AC();
       masterGain = ctx.createGain();
-      masterGain.gain.value = 0.22;
+      masterGain.gain.value = 0.48;
       masterGain.connect(ctx.destination);
     }
     if (ctx.state === "suspended") {
@@ -224,9 +274,10 @@
     var barStep = stepIndex % 8;
     var chordIdx = Math.floor(stepIndex / 8) % profile.chords.length;
     var chord = profile.chords[chordIdx];
+    var duck = externalActive ? 0.25 : 1.0;
 
-    // 1. Keywise Chord Pad on step 0 of each bar
-    if (barStep === 0) {
+    // 1. Keywise Chord Pad on step 0 of each bar (ducked when Lyria stereo bed is active)
+    if (barStep === 0 && !externalActive) {
       for (var i = 0; i < chord.length; i++) {
         triggerNote(
           midiToFreq(profile.rootMidi + 12 + chord[i]),
@@ -241,7 +292,7 @@
 
     // 2. Keywise Bassline
     var bassIv = profile.bassPattern[barStep];
-    if (bassIv !== -1) {
+    if (bassIv !== -1 && !externalActive) {
       triggerNote(
         midiToFreq(profile.rootMidi - 12 + chord[0] + bassIv),
         "triangle",
@@ -252,22 +303,123 @@
       );
     }
 
-    // 3. Keywise Arpeggio / Melody voice
+    // 3. Keywise Arpeggio / Melody voice (subtle harmonic lock over Lyria stem)
     var arpDeg = profile.arpSteps[barStep % profile.arpSteps.length];
     var arpPitch = profile.rootMidi + 12 + chord[arpDeg % chord.length];
     triggerNote(
       midiToFreq(arpPitch),
       profile.leadWave,
       stepDur * 0.65,
-      0.04,
+      0.04 * duck,
       profile.filterCutoff * 1.3,
       0
     );
 
     // 4. Keywise Groove Percussion
-    triggerPerc(profile.kickPattern[barStep] === 1, profile.hatLevel);
+    if (!externalActive) {
+      triggerPerc(profile.kickPattern[barStep] === 1, profile.hatLevel);
+    }
 
     stepIndex++;
+  }
+
+  function currentTrackUrl(profile) {
+    var explicit = document.documentElement.getAttribute("data-audio-stem");
+    if (explicit) return explicit;
+    if (profile.tracks && profile.tracks.length) {
+      var tr = profile.tracks[trackIndex % profile.tracks.length];
+      return "assets/audio/" + tr.slug + ".mp3";
+    }
+    return "assets/audio/theme-bed.mp3";
+  }
+
+  function loadAndPlayTrack(profile, advanceOnEnd) {
+    var url = currentTrackUrl(profile);
+    if (!externalAudio) {
+      try {
+        externalAudio = new Audio();
+        externalAudio.preload = "auto";
+        externalAudio.volume = 0.78;
+        externalAudio.addEventListener("playing", function () {
+          externalActive = true;
+          updateButtonUI();
+        });
+        externalAudio.addEventListener("canplaythrough", function () {
+          externalActive = true;
+        });
+        externalAudio.addEventListener("error", function () {
+          var failedUrl = externalAudio.getAttribute("data-track-url") || "";
+          if (failedUrl && failedUrl !== "assets/audio/theme-bed.mp3") {
+            externalAudio.setAttribute("data-track-url", "assets/audio/theme-bed.mp3");
+            externalAudio.src = "assets/audio/theme-bed.mp3";
+            externalAudio.loop = true;
+            externalAudio.play().catch(function () { externalActive = false; });
+          } else {
+            externalActive = false;
+          }
+        });
+        externalAudio.addEventListener("ended", function () {
+          if (!playing) return;
+          if (profile.tracks && profile.tracks.length > 1) {
+            trackIndex = (trackIndex + 1) % profile.tracks.length;
+            loadAndPlayTrack(profile, true);
+            updateButtonUI();
+          } else {
+            externalAudio.currentTime = 0;
+            externalAudio.play().catch(function () {});
+          }
+        });
+      } catch (e) {}
+    }
+    if (externalAudio) {
+      try {
+        externalAudio.loop = !(profile.tracks && profile.tracks.length > 1);
+        if (externalAudio.getAttribute("data-track-url") !== url) {
+          externalAudio.setAttribute("data-track-url", url);
+          externalAudio.src = url;
+        }
+        externalAudio.play().then(function () {
+          externalActive = true;
+          updateButtonUI();
+        }).catch(function () {
+          externalActive = false;
+        });
+      } catch (e) {}
+    }
+  }
+
+  function nextTrack() {
+    var gameId = detectGameId();
+    var profile = Profiles[gameId] || Profiles.champions;
+    if (profile.tracks && profile.tracks.length) {
+      trackIndex = (trackIndex + 1) % profile.tracks.length;
+    }
+    if (!playing) {
+      startMusic();
+    } else {
+      loadAndPlayTrack(profile, true);
+      updateButtonUI();
+    }
+  }
+
+  function setMood(roleOrIndex) {
+    var gameId = detectGameId();
+    var profile = Profiles[gameId] || Profiles.champions;
+    if (!profile.tracks || !profile.tracks.length) return;
+    if (typeof roleOrIndex === "number") {
+      trackIndex = ((roleOrIndex % profile.tracks.length) + profile.tracks.length) % profile.tracks.length;
+    } else {
+      for (var i = 0; i < profile.tracks.length; i++) {
+        if (profile.tracks[i].role === roleOrIndex || profile.tracks[i].slug === roleOrIndex) {
+          trackIndex = i;
+          break;
+        }
+      }
+    }
+    if (playing) {
+      loadAndPlayTrack(profile, true);
+    }
+    updateButtonUI();
   }
 
   function startMusic() {
@@ -278,16 +430,7 @@
     playing = true;
     stepIndex = 0;
 
-    // Optional MusicFX / Lyria external stem support
-    var stemUrl = document.documentElement.getAttribute("data-audio-stem");
-    if (stemUrl && !externalAudio) {
-      try {
-        externalAudio = new Audio(stemUrl);
-        externalAudio.loop = true;
-        externalAudio.volume = 0.35;
-        externalAudio.play().catch(function () {});
-      } catch (e) {}
-    }
+    loadAndPlayTrack(profile, true);
 
     var stepMs = (60 / profile.bpm / 2) * 1000;
     stepSequencer(profile);
@@ -329,8 +472,11 @@
     if (!btnEl) return;
     var gameId = detectGameId();
     var profile = Profiles[gameId] || Profiles.champions;
-    btnEl.textContent = playing ? "♫ Score: On" : "♫ Score: Off";
-    btnEl.title = profile.title + " — Click to toggle soundtrack";
+    var total = (profile.tracks && profile.tracks.length) || 1;
+    var num = (trackIndex % total) + 1;
+    var trTitle = (profile.tracks && profile.tracks[trackIndex % total] && profile.tracks[trackIndex % total].title) || profile.title;
+    btnEl.textContent = playing ? ("♫ Score: On (" + num + "/" + total + ")") : "♫ Score: Off";
+    btnEl.title = trTitle + " (" + profile.title + ") — Click to toggle soundtrack, Shift+Click or Right-Click for next track";
     btnEl.setAttribute("aria-pressed", playing ? "true" : "false");
     btnEl.style.borderColor = playing ? "#c9a45c" : "rgba(201,164,92,0.35)";
     btnEl.style.color = playing ? "#f8e6b8" : "#c7bda8";
@@ -362,7 +508,16 @@
     ].join(";");
     btnEl.addEventListener("click", function (e) {
       e.stopPropagation();
-      toggleMusic();
+      if (e.shiftKey) {
+        nextTrack();
+      } else {
+        toggleMusic();
+      }
+    });
+    btnEl.addEventListener("contextmenu", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      nextTrack();
     });
     document.body.appendChild(btnEl);
     updateButtonUI();
@@ -385,6 +540,8 @@
     start: startMusic,
     stop: stopMusic,
     toggle: toggleMusic,
+    nextTrack: nextTrack,
+    setMood: setMood,
     playClick: playUiClick,
   };
 })();
